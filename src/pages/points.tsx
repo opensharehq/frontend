@@ -62,49 +62,59 @@ export default function PointsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t('points.title')}</h1>
-        <p className="text-muted-foreground">{t('points.subtitle')}</p>
+    <div className="mx-auto max-w-6xl space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0 space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-balance">{t('points.title')}</h1>
+          <p className="max-w-2xl text-sm leading-6 text-foreground/70 text-pretty">{t('points.subtitle')}</p>
+        </div>
+        <Button variant="outline" className="min-h-11 w-full sm:w-auto" asChild>
+          <Link to="/points/transactions">
+            <ArrowRightLeft className="size-4" />
+            <span>{t('points.transactions')}</span>
+          </Link>
+        </Button>
       </div>
 
-      <PointsBalanceCard balance={balance} />
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <PointsBalanceCard balance={balance} />
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t('points.operations')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {isMainlandCn && (
-              <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
-                <Link to="/points/withdrawals">
-                  <ArrowUpRight className="size-5" />
-                  <span>{t('points.withdrawRequest')}</span>
+        <Card className="lg:sticky lg:top-6 lg:self-start">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">{t('points.operations')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-2">
+              {isMainlandCn && (
+                <Button variant="outline" className="min-h-11 justify-start" asChild>
+                  <Link to="/points/withdrawals">
+                    <ArrowUpRight className="size-4" />
+                    <span>{t('points.withdrawRequest')}</span>
+                  </Link>
+                </Button>
+              )}
+              <Button variant="outline" className="min-h-11 justify-start" asChild>
+                <Link to="/shop">
+                  <ShoppingBag className="size-4" />
+                  <span>{t('points.shop')}</span>
                 </Link>
               </Button>
-            )}
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
-              <Link to="/shop">
-                <ShoppingBag className="size-5" />
-                <span>{t('points.shop')}</span>
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
-              <Link to="/points/allocate">
-                <Send className="size-5" />
-                <span>{t('points.allocatePoints')}</span>
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
-              <Link to="/points/transactions">
-                <ArrowRightLeft className="size-5" />
-                <span>{t('points.transactions')}</span>
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+              <Button variant="outline" className="min-h-11 justify-start" asChild>
+                <Link to="/points/allocate">
+                  <Send className="size-4" />
+                  <span>{t('points.allocatePoints')}</span>
+                </Link>
+              </Button>
+              <Button variant="outline" className="min-h-11 justify-start" asChild>
+                <Link to="/points/transactions">
+                  <ArrowRightLeft className="size-4" />
+                  <span>{t('points.transactions')}</span>
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

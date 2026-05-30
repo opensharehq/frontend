@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Icon } from '@iconify/react/offline';
@@ -10,7 +10,13 @@ import { TrendChart } from './components/TrendChart';
 import { RepoPlatformIcon } from './components/RepoPlatformIcon';
 import { DeltaDisplay } from './components/DeltaDisplay';
 import { LeaderboardAvatar } from './components/LeaderboardAvatar';
+import { InsightDetailNav } from './components/InsightDetailNav';
 import type { RepoTrendMap, TrendSeries, UserOssMeta } from './types/api';
+
+type DeveloperTrendKey = keyof Pick<
+  RepoTrendMap,
+  'influence' | 'activity' | 'openIssue' | 'issueComment' | 'openPull' | 'reviewComment'
+>;
 
 function getLatest(t: TrendSeries | null): number {
   const v = t?.values || [];
@@ -26,6 +32,15 @@ function getDelta(t: TrendSeries | null, latest: number, prev: number): number |
   const len = t?.values?.length ?? 0;
   if (len < 2) return null;
   return latest - prev;
+}
+
+function pickDeveloperTrend(
+  trendData: RepoTrendMap | null,
+  key: DeveloperTrendKey,
+  dataKey: 'monthly' | 'yearly',
+): TrendSeries {
+  const series = trendData?.[key]?.[dataKey];
+  return series?.values?.length ? series : EMPTY_TREND;
 }
 
 function StatCard({
@@ -48,11 +63,11 @@ function StatCard({
     : value ? value.toFixed(1) : '0';
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
         <Icon icon={icon} className={`size-4 ${iconColor}`} aria-hidden />
-        <span>{label}</span>
+        <span className="min-w-0 break-words">{label}</span>
       </div>
-      <div className="flex items-end gap-2">
+      <div className="flex flex-wrap items-end gap-2">
         <span className="text-2xl font-bold tabular-nums text-card-foreground">
           {displayValue}
         </span>
@@ -99,34 +114,117 @@ export default function DeveloperDetailPage() {
   }, [platform, login]);
 
   const dataKey = trendMode === 'year' ? 'yearly' : 'monthly';
-  const getTrend = (key: keyof RepoTrendMap): TrendSeries => {
-    if (!trendData || !trendData[key] || !trendData[key]![dataKey]?.values?.length) return EMPTY_TREND;
-    return trendData[key]![dataKey];
-  };
+  const trendSeries = useMemo(
+    () => ({
+      influence: pickDeveloperTrend(trendData, 'influence', dataKey),
+      activity: pickDeveloperTrend(trendData, 'activity', dataKey),
+      openIssue: pickDeveloperTrend(trendData, 'openIssue', dataKey),
+      issueComment: pickDeveloperTrend(trendData, 'issueComment', dataKey),
+      openPull: pickDeveloperTrend(trendData, 'openPull', dataKey),
+      reviewComment: pickDeveloperTrend(trendData, 'reviewComment', dataKey),
+    }),
+    [trendData, dataKey],
+  );
 
-  const influenceTrend = getTrend('influence');
-  const activityTrend = getTrend('activity');
-  const openIssueTrend = getTrend('openIssue');
-  const issueCommentTrend = getTrend('issueComment');
-  const openPullTrend = getTrend('openPull');
-  const reviewCommentTrend = getTrend('reviewComment');
-
-  const infLatest = getLatest(influenceTrend);
-  const infPrev = getPrev(influenceTrend);
-  const actLatest = getLatest(activityTrend);
-  const actPrev = getPrev(activityTrend);
-  const oiLatest = getLatest(openIssueTrend);
-  const oiPrev = getPrev(openIssueTrend);
-  const icLatest = getLatest(issueCommentTrend);
-  const icPrev = getPrev(issueCommentTrend);
-  const opLatest = getLatest(openPullTrend);
-  const opPrev = getPrev(openPullTrend);
-  const rcLatest = getLatest(reviewCommentTrend);
-  const rcPrev = getPrev(reviewCommentTrend);
-
-  const timeKey = influenceTrend.months?.length
-    ? influenceTrend.months[influenceTrend.months.length - 1]
+  const timeKey = trendSeries.influence.months?.length
+    ? trendSeries.influence.months[trendSeries.influence.months.length - 1]
     : '';
+
+  const statItems = useMemo(
+    () => [
+      {
+        key: 'influence',
+        icon: 'mdi:lightning-bolt',
+        iconColor: 'text-purple-500',
+        label: t('insight.detailStatOpenRankInfluence'),
+        trend: trendSeries.influence,
+      },
+      {
+        key: 'activity',
+        icon: 'mdi:chart-line',
+        iconColor: 'text-emerald-500',
+        label: t('insight.detailStatActivity'),
+        trend: trendSeries.activity,
+      },
+      {
+        key: 'openIssue',
+        icon: 'mdi:clipboard-alert-outline',
+        iconColor: 'text-amber-500',
+        label: t('insight.detailStatOpenIssue'),
+        trend: trendSeries.openIssue,
+        isInt: true,
+      },
+      {
+        key: 'issueComment',
+        icon: 'mdi:comment-outline',
+        iconColor: 'text-sky-500',
+        label: t('insight.detailStatIssueComment'),
+        trend: trendSeries.issueComment,
+        isInt: true,
+      },
+      {
+        key: 'openPull',
+        icon: 'mdi:source-pull',
+        iconColor: 'text-indigo-500',
+        label: t('insight.detailStatOpenPull'),
+        trend: trendSeries.openPull,
+        isInt: true,
+      },
+      {
+        key: 'reviewComment',
+        icon: 'mdi:comment-check-outline',
+        iconColor: 'text-rose-500',
+        label: t('insight.detailStatReviewComment'),
+        trend: trendSeries.reviewComment,
+        isInt: true,
+      },
+    ].map((item) => {
+      const latest = getLatest(item.trend);
+      const prev = getPrev(item.trend);
+      return {
+        ...item,
+        latest,
+        delta: getDelta(item.trend, latest, prev),
+      };
+    }),
+    [t, trendSeries],
+  );
+
+  const trendCharts = useMemo(
+    () => [
+      {
+        key: 'influence',
+        label: t('insight.detailChartInfluenceTrend'),
+        trend: trendSeries.influence,
+      },
+      {
+        key: 'activity',
+        label: t('insight.detailChartActivityTrend'),
+        trend: trendSeries.activity,
+      },
+      {
+        key: 'openIssue',
+        label: t('insight.detailStatOpenIssue'),
+        trend: trendSeries.openIssue,
+      },
+      {
+        key: 'issueComment',
+        label: t('insight.detailStatIssueComment'),
+        trend: trendSeries.issueComment,
+      },
+      {
+        key: 'openPull',
+        label: t('insight.detailStatOpenPull'),
+        trend: trendSeries.openPull,
+      },
+      {
+        key: 'reviewComment',
+        label: t('insight.detailStatReviewComment'),
+        trend: trendSeries.reviewComment,
+      },
+    ],
+    [t, trendSeries],
+  );
 
   const profileUrl = getDeveloperProfileUrlByPlatform(platform, login);
   const avatarUrl = inferDeveloperAvatarUrl(platform, login, ossMeta?.id);
@@ -163,42 +261,49 @@ export default function DeveloperDetailPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 space-y-6">
+      <InsightDetailNav
+        homeLabel={t('insight.developerDetailBreadcrumbHome')}
+        sectionLabel={t('insight.detailSectionDeveloper')}
+        currentLabel={`@${login}`}
+        backLabel={t('insight.developerDetailBackToInsight')}
+      />
+
       {/* Developer info card */}
       <div className="rounded-xl border border-border bg-card p-6">
-        <div className="flex items-start gap-4">
-          <div className="size-32 flex-shrink-0">
+        <div className="flex flex-col items-start gap-4 sm:flex-row">
+          <div className="size-20 flex-shrink-0 sm:size-32">
             <LeaderboardAvatar
               avatar={avatarUrl}
               displayName={displayName}
-              sizeClass="w-32 h-32"
+              sizeClass="size-20 sm:size-32"
               circular
               bordered={false}
             />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-xl font-bold text-balance text-card-foreground">{displayName}</h1>
-              <span className="text-sm text-muted-foreground">@{login}</span>
+              <h1 className="min-w-0 break-words text-xl font-bold text-balance text-card-foreground">{displayName}</h1>
+              <span className="max-w-full break-all text-sm text-muted-foreground">@{login}</span>
             </div>
 
             {(profileLocation || profileCompany || profileBio) && (
-              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+              <div className="mt-2 flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4">
                 {profileLocation && (
-                  <span className="flex items-center gap-1">
+                  <span className="flex min-w-0 items-center gap-1">
                     <Icon icon="mdi:map-marker" className="size-4 text-muted-foreground" aria-hidden />
-                    {profileLocation}
+                    <span className="min-w-0 break-words">{profileLocation}</span>
                   </span>
                 )}
                 {profileCompany && (
-                  <span className="flex items-center gap-1">
+                  <span className="flex min-w-0 items-center gap-1">
                     <Icon icon="mdi:domain" className="size-4 text-muted-foreground" aria-hidden />
-                    {profileCompany}
+                    <span className="min-w-0 break-words">{profileCompany}</span>
                   </span>
                 )}
                 {profileBio && (
-                  <span className="flex items-center gap-1">
+                  <span className="flex min-w-0 items-center gap-1">
                     <Icon icon="mdi:card-text-outline" className="size-4 text-muted-foreground" aria-hidden />
-                    {profileBio}
+                    <span className="min-w-0 break-words">{profileBio}</span>
                   </span>
                 )}
               </div>
@@ -210,7 +315,7 @@ export default function DeveloperDetailPage() {
             href={profileUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-secondary"
+            className="inline-flex w-full flex-shrink-0 items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-auto"
           >
             <RepoPlatformIcon platform={platform} size="sm" />
             <span>{t('insight.detailDeveloperProfile')}</span>
@@ -220,7 +325,7 @@ export default function DeveloperDetailPage() {
       </div>
 
       {/* Mode toggle */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-sm font-semibold text-foreground">
           {t('insight.detailBasicStatsHeading')}
           {timeKey && <span className="ml-2 font-normal text-muted-foreground">({timeKey})</span>}
@@ -232,6 +337,7 @@ export default function DeveloperDetailPage() {
         >
           <button
             type="button"
+            aria-pressed={trendMode === 'month'}
             className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
               trendMode === 'month'
                 ? 'bg-secondary text-secondary-foreground shadow-sm'
@@ -243,6 +349,7 @@ export default function DeveloperDetailPage() {
           </button>
           <button
             type="button"
+            aria-pressed={trendMode === 'year'}
             className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
               trendMode === 'year'
                 ? 'bg-secondary text-secondary-foreground shadow-sm'
@@ -256,57 +363,32 @@ export default function DeveloperDetailPage() {
       </div>
 
       {/* Primary stats - OpenRank + Activity */}
-      <div className="grid grid-cols-2 gap-4">
-        <StatCard
-          icon="mdi:lightning-bolt"
-          iconColor="text-purple-500"
-          label={t('insight.detailStatOpenRankInfluence')}
-          value={infLatest}
-          delta={getDelta(influenceTrend, infLatest, infPrev)}
-        />
-        <StatCard
-          icon="mdi:chart-line"
-          iconColor="text-emerald-500"
-          label={t('insight.detailStatActivity')}
-          value={actLatest}
-          delta={getDelta(activityTrend, actLatest, actPrev)}
-        />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {statItems.slice(0, 2).map((item) => (
+          <StatCard
+            key={item.key}
+            icon={item.icon}
+            iconColor={item.iconColor}
+            label={item.label}
+            value={item.latest}
+            delta={item.delta}
+          />
+        ))}
       </div>
 
       {/* Detail stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard
-          icon="mdi:clipboard-alert-outline"
-          iconColor="text-amber-500"
-          label={t('insight.detailStatOpenIssue')}
-          value={oiLatest}
-          delta={getDelta(openIssueTrend, oiLatest, oiPrev)}
-          isInt
-        />
-        <StatCard
-          icon="mdi:comment-outline"
-          iconColor="text-sky-500"
-          label={t('insight.detailStatIssueComment')}
-          value={icLatest}
-          delta={getDelta(issueCommentTrend, icLatest, icPrev)}
-          isInt
-        />
-        <StatCard
-          icon="mdi:source-pull"
-          iconColor="text-indigo-500"
-          label={t('insight.detailStatOpenPull')}
-          value={opLatest}
-          delta={getDelta(openPullTrend, opLatest, opPrev)}
-          isInt
-        />
-        <StatCard
-          icon="mdi:comment-check-outline"
-          iconColor="text-rose-500"
-          label={t('insight.detailStatReviewComment')}
-          value={rcLatest}
-          delta={getDelta(reviewCommentTrend, rcLatest, rcPrev)}
-          isInt
-        />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {statItems.slice(2).map((item) => (
+          <StatCard
+            key={item.key}
+            icon={item.icon}
+            iconColor={item.iconColor}
+            label={item.label}
+            value={item.latest}
+            delta={item.delta}
+            isInt={item.isInt}
+          />
+        ))}
       </div>
 
       {/* Trend charts */}
@@ -315,18 +397,15 @@ export default function DeveloperDetailPage() {
           {t('insight.detailHistoricalTrendHeading')}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <TrendChart
-            values={influenceTrend.values}
-            label={t('insight.detailChartInfluenceTrend')}
-            monthLabels={influenceTrend.months}
-            noDataText={t('insight.noData')}
-          />
-          <TrendChart
-            values={activityTrend.values}
-            label={t('insight.detailChartActivityTrend')}
-            monthLabels={activityTrend.months}
-            noDataText={t('insight.noData')}
-          />
+          {trendCharts.map((item) => (
+            <TrendChart
+              key={item.key}
+              values={item.trend.values}
+              label={item.label}
+              monthLabels={item.trend.months}
+              noDataText={t('insight.noData')}
+            />
+          ))}
         </div>
       </div>
     </div>

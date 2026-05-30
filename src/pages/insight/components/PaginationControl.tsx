@@ -1,6 +1,12 @@
 import { Icon } from '@iconify/react/offline';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/app/components/ui/select';
 
 type Props = {
   currentPage: number;
@@ -24,109 +30,6 @@ export function PaginationControl({
 }: Props) {
   const { t } = useTranslation();
   const selectPageLabel = t('insight.selectPage');
-  const [open, setOpen] = useState(false);
-  const btnRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const pendingRestore = useRef<{ scrollTop: number } | null>(null);
-
-  useLayoutEffect(() => {
-    if (!pendingRestore.current || !menuRef.current) return;
-    const st = pendingRestore.current.scrollTop;
-    pendingRestore.current = null;
-    setOpen(true);
-    requestAnimationFrame(() => {
-      const menu = menuRef.current;
-      if (!menu) return;
-      menu.scrollTop = st;
-      const activeItem = menu.querySelector('.page-dropdown-item.active');
-      if (activeItem) {
-        const menuHeight = menu.clientHeight;
-        const itemOffsetTop = (activeItem as HTMLElement).offsetTop;
-        const itemHeight = (activeItem as HTMLElement).offsetHeight;
-        const menuScrollTop = menu.scrollTop;
-        if (itemOffsetTop < menuScrollTop) {
-          menu.scrollTop = itemOffsetTop;
-        } else if (itemOffsetTop + itemHeight > menuScrollTop + menuHeight) {
-          menu.scrollTop = itemOffsetTop + itemHeight - menuHeight;
-        }
-      }
-    });
-  }, [currentPage, totalPages]);
-
-  useEffect(() => {
-    if (!open) return;
-    const close = (e: MouseEvent) => {
-      const t = e.target as Node;
-      if (btnRef.current?.contains(t) || menuRef.current?.contains(t)) return;
-      setOpen(false);
-    };
-    requestAnimationFrame(() => document.addEventListener('click', close, true));
-    return () => document.removeEventListener('click', close, true);
-  }, [open]);
-
-  const positionMenu = () => {
-    const btn = btnRef.current;
-    const menu = menuRef.current;
-    if (!btn || !menu) return;
-    const rect = btn.getBoundingClientRect();
-    menu.style.position = 'fixed';
-    menu.style.top = rect.bottom + 4 + 'px';
-    menu.style.left = rect.left + 'px';
-    menu.style.width = Math.max(rect.width, 80) + 'px';
-    menu.style.right = 'auto';
-  };
-
-  useEffect(() => {
-    if (!open) {
-      if (menuRef.current) {
-        const menu = menuRef.current;
-        menu.style.position = '';
-        menu.style.top = '';
-        menu.style.left = '';
-        menu.style.width = '';
-      }
-      return;
-    }
-
-    positionMenu();
-    let raf = 0;
-    const schedulePosition = () => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
-        positionMenu();
-      });
-    };
-
-    window.addEventListener('scroll', schedulePosition, true);
-    window.addEventListener('resize', schedulePosition);
-
-    const scrollables: Element[] = [];
-    let el = btnRef.current?.parentElement ?? null;
-    while (el) {
-      const { overflow, overflowX, overflowY } = getComputedStyle(el);
-      if (/(auto|scroll|overlay)/.test(overflow + overflowX + overflowY)) {
-        scrollables.push(el);
-      }
-      el = el.parentElement;
-    }
-    const scrollingRoot = document.scrollingElement;
-    if (scrollingRoot && !scrollables.includes(scrollingRoot)) {
-      scrollables.push(scrollingRoot);
-    }
-    for (const node of scrollables) {
-      node.addEventListener('scroll', schedulePosition, { passive: true });
-    }
-
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('scroll', schedulePosition, true);
-      window.removeEventListener('resize', schedulePosition);
-      for (const node of scrollables) {
-        node.removeEventListener('scroll', schedulePosition);
-      }
-    };
-  }, [open]);
 
   if (!showWhenSinglePage && totalPages <= 1) return null;
 
@@ -135,70 +38,55 @@ export function PaginationControl({
       id={compact ? undefined : 'paginationContainer'}
       className={`flex items-center overflow-hidden border border-border bg-background ${compact ? (dense ? 'h-7 rounded-md' : 'h-10 rounded-lg') : 'rounded-lg'}`}
     >
-          <button
-            type="button"
-            id="prevPageBtn"
-            disabled={currentPage === 1}
-            onClick={() => {
-              if (open && menuRef.current) pendingRestore.current = { scrollTop: menuRef.current.scrollTop };
-              onPageChange(currentPage - 1);
-            }}
-            className={`time-picker-arrow flex flex-shrink-0 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-secondary hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40 ${dense && compact ? 'size-7' : 'h-10 w-9'}`}
+      <button
+        type="button"
+        id="prevPageBtn"
+        disabled={currentPage === 1}
+        onClick={() => onPageChange(currentPage - 1)}
+        className={`time-picker-arrow flex flex-shrink-0 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-secondary hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40 ${dense && compact ? 'size-7' : 'h-10 w-9'}`}
+      >
+        <Icon icon="mdi:chevron-left" className={dense && compact ? 'text-sm' : 'text-lg'} aria-hidden />
+      </button>
+      <div className="min-w-0 flex-1">
+        <Select
+          value={String(currentPage)}
+          onValueChange={(value) => onPageChange(Number(value))}
+        >
+          <SelectTrigger
+            id="pageDropdownBtn"
+            aria-label={selectPageLabel}
+            size={dense && compact ? 'sm' : 'default'}
+            className={`rounded-none border-0 bg-transparent shadow-none focus-visible:ring-2 focus-visible:ring-ring ${dense && compact ? 'h-7 px-2 py-1 text-xs' : 'h-10 px-3 py-2.5 text-sm'}`}
           >
-            <Icon icon="mdi:chevron-left" className={dense && compact ? 'text-sm' : 'text-lg'} aria-hidden />
-          </button>
-          <div className="page-dropdown relative flex-1 min-w-0">
-            <button
-              ref={btnRef}
-              type="button"
-              id="pageDropdownBtn"
-              onClick={(e) => {
-                e.stopPropagation();
-                setOpen((o) => !o);
-              }}
-              className={`flex w-full min-w-0 flex-1 cursor-pointer items-center justify-center text-foreground transition-colors hover:bg-secondary/60 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset ${dense && compact ? 'px-2 py-1 text-xs' : 'px-3 py-2.5 text-sm'}`}
-              aria-haspopup="listbox"
-              aria-expanded={open}
-              aria-label={selectPageLabel}
-            >
-              <span className="truncate">
-                {currentPage} / {totalPages}
-              </span>
-            </button>
-            <div
-              ref={menuRef}
-              id="pageDropdownMenu"
-              className={`page-dropdown-menu ${open ? 'show' : ''}${dense && compact ? ' page-dropdown-menu--dense' : ''}`}
-              role="listbox"
-            >
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <div
-                  key={p}
-                  role="option"
-                  className={`page-dropdown-item ${p === currentPage ? 'active' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setOpen(false);
-                    onPageChange(p);
-                  }}
-                >
-                  {p}
-                </div>
-              ))}
-            </div>
-          </div>
-          <button
-            type="button"
-            id="nextPageBtn"
-            disabled={currentPage === totalPages}
-            onClick={() => {
-              if (open && menuRef.current) pendingRestore.current = { scrollTop: menuRef.current.scrollTop };
-              onPageChange(currentPage + 1);
-            }}
-            className={`time-picker-arrow flex flex-shrink-0 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-secondary hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40 ${dense && compact ? 'size-7' : 'h-10 w-9'}`}
+            <SelectValue>
+              {currentPage} / {totalPages}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent
+            id="pageDropdownMenu"
+            className={dense && compact ? 'max-h-40 min-w-20' : 'max-h-52 min-w-24'}
           >
-            <Icon icon="mdi:chevron-right" className={dense && compact ? 'text-sm' : 'text-lg'} aria-hidden />
-          </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <SelectItem
+                key={p}
+                value={String(p)}
+                className={dense && compact ? 'min-h-8 text-xs' : undefined}
+              >
+                {p}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <button
+        type="button"
+        id="nextPageBtn"
+        disabled={currentPage === totalPages}
+        onClick={() => onPageChange(currentPage + 1)}
+        className={`time-picker-arrow flex flex-shrink-0 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-secondary hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40 ${dense && compact ? 'size-7' : 'h-10 w-9'}`}
+      >
+        <Icon icon="mdi:chevron-right" className={dense && compact ? 'text-sm' : 'text-lg'} aria-hidden />
+      </button>
     </div>
   );
 

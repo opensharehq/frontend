@@ -1,9 +1,11 @@
+import { lazy } from 'react';
 import { useParams, useRoutes } from 'react-router-dom';
 
 import './icons/registerMdiOffline';
-import LabelDetailPage from './label-detail';
-import RepoDetailPage from './repo-detail';
-import DeveloperDetailPage from './developer-detail';
+
+const LabelDetailPage = lazy(() => import('./label-detail'));
+const RepoDetailPage = lazy(() => import('./repo-detail'));
+const DeveloperDetailPage = lazy(() => import('./developer-detail'));
 
 // Known repo/developer platform identifiers. The first path segment after
 // `/insight/` decides whether the URL points at a repo, a developer or an

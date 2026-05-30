@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { buildSmoothPath, getYAxisTicks } from '../domain/chartSvg';
 
 type Props = {
@@ -9,50 +9,7 @@ type Props = {
 };
 
 export function TrendChart({ values, label, monthLabels, noDataText }: Props) {
-  const wrapRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const wrap = wrapRef.current;
-    if (!wrap) return;
-    const tooltipEl = wrap.querySelector('.trend-chart-tooltip');
-    if (!tooltipEl) return;
-    let data: { labels: string[]; values: number[] };
-    try {
-      const raw = wrap.getAttribute('data-trend-data');
-      if (!raw) return;
-      data = JSON.parse(raw);
-    } catch {
-      return;
-    }
-    const { labels = [], values: vals = [] } = data;
-    const n = Math.min(labels.length, vals.length);
-    if (n === 0) return;
-    const onMove = (e: MouseEvent) => {
-      const rect = wrap.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width;
-      const i = Math.min(n - 1, Math.max(0, Math.round(x * (n - 1))));
-      const lb = labels[i] != null ? labels[i] : '';
-      const val = vals[i] != null ? Number(vals[i]) : 0;
-      tooltipEl.textContent = `${lb}: ${val}`;
-      tooltipEl.classList.add('visible');
-      const relX = e.clientX - rect.left;
-      const relY = e.clientY - rect.top;
-      requestAnimationFrame(() => {
-        const ttRect = tooltipEl.getBoundingClientRect();
-        let left = relX - ttRect.width / 2;
-        left = Math.max(4, Math.min(rect.width - ttRect.width - 4, left));
-        (tooltipEl as HTMLElement).style.left = left + 'px';
-        (tooltipEl as HTMLElement).style.top = Math.max(4, relY - ttRect.height - 8) + 'px';
-      });
-    };
-    const onLeave = () => tooltipEl.classList.remove('visible');
-    wrap.addEventListener('mousemove', onMove);
-    wrap.addEventListener('mouseleave', onLeave);
-    return () => {
-      wrap.removeEventListener('mousemove', onMove);
-      wrap.removeEventListener('mouseleave', onLeave);
-    };
-  }, [values, monthLabels, label, noDataText]);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   let labels: string[];
   if (monthLabels && monthLabels.length > 0) {
@@ -87,9 +44,17 @@ export function TrendChart({ values, label, monthLabels, noDataText }: Props) {
   });
   const linePath = buildSmoothPath(points as number[][]);
   const areaPath = linePath + ' L' + (pad + w) + ',' + (pad + h) + ' L' + pad + ',' + (pad + h) + ' Z';
-  const trendDataJson = JSON.stringify({ labels, values })
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;');
+  const latestIndex = n - 1;
+  const shownIndex = activeIndex ?? latestIndex;
+  const shownLabel = labels[shownIndex] || '';
+  const shownValue = Number(values[shownIndex] ?? 0);
+  const tooltipLeft = n === 1 ? 50 : shownIndex / (n - 1) * 100;
+  const tooltipTop = Math.max(8, points[shownIndex][1] - 10);
+  const summary = `${label}: ${shownLabel} ${shownValue}`;
+  const handleIndexFromClientX = (clientX: number, width: number, left: number) => {
+    const x = (clientX - left) / width;
+    setActiveIndex(Math.min(n - 1, Math.max(0, Math.round(x * (n - 1)))));
+  };
 
   return (
     <div className="mb-4">
@@ -104,10 +69,24 @@ export function TrendChart({ values, label, monthLabels, noDataText }: Props) {
             ))}
         </div>
         <div
-          ref={wrapRef}
-          className="flex-1 min-w-0 h-20 flex flex-col trend-chart-wrap"
+          className="flex-1 min-w-0 h-20 flex flex-col trend-chart-wrap rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
           style={{ minHeight: '5rem' }}
-          data-trend-data={trendDataJson}
+          tabIndex={0}
+          role="img"
+          aria-label={summary}
+          onFocus={() => setActiveIndex((index) => index ?? latestIndex)}
+          onBlur={() => setActiveIndex(null)}
+          onMouseMove={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            handleIndexFromClientX(e.clientX, rect.width, rect.left);
+          }}
+          onMouseLeave={() => setActiveIndex(null)}
+          onKeyDown={(e) => {
+            if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+            e.preventDefault();
+            const delta = e.key === 'ArrowRight' ? 1 : -1;
+            setActiveIndex((index) => Math.min(n - 1, Math.max(0, (index ?? latestIndex) + delta)));
+          }}
         >
           <svg className="w-full flex-1 min-h-0" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
             <path d={areaPath} fill="var(--insight-accent-light)" />
@@ -120,7 +99,19 @@ export function TrendChart({ values, label, monthLabels, noDataText }: Props) {
               strokeLinejoin="round"
             />
           </svg>
-          <div className="trend-chart-tooltip" role="tooltip" />
+          {activeIndex !== null ? (
+            <div
+              className="trend-chart-tooltip visible"
+              role="tooltip"
+              style={{
+                left: `clamp(0.25rem, ${tooltipLeft}%, calc(100% - 0.25rem))`,
+                top: `${tooltipTop}%`,
+                transform: 'translate(-50%, -100%)',
+              }}
+            >
+              {shownLabel}: {shownValue}
+            </div>
+          ) : null}
           <div className="mt-1 flex flex-shrink-0 justify-between text-xs text-muted-foreground">
             <span>{labels[0] || ''}</span>
             <span>{labels[labels.length - 1] || ''}</span>

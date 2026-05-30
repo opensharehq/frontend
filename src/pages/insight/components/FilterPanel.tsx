@@ -1,6 +1,13 @@
 import { Icon } from '@iconify/react/offline';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/app/components/ui/select';
 import type { LeaderboardMeta } from '../types/api';
 import { filterGroupTypesForUnitDropdown } from '../domain/meta';
 import { TimeRangePicker } from './TimeRangePicker';
@@ -26,17 +33,6 @@ type Props = {
   paginationSlot: ReactNode;
 };
 
-function preventFilterDropdownScrollChaining(e: React.WheelEvent<HTMLDivElement>) {
-  const menu = e.currentTarget;
-  if (!menu.classList.contains('show')) return;
-  const { scrollTop, clientHeight, scrollHeight } = menu;
-  const atTop = scrollTop <= 0;
-  const atBottom = scrollTop + clientHeight >= scrollHeight - 1;
-  if ((atTop && e.deltaY < 0) || (atBottom && e.deltaY > 0)) {
-    e.preventDefault();
-  }
-}
-
 export function FilterPanel({
   meta,
   scopeValue,
@@ -57,40 +53,6 @@ export function FilterPanel({
 }: Props) {
   const { t, i18n } = useTranslation();
   const lang = normalizeInsightLang(i18n.language);
-  const [scopeMenuOpen, setScopeMenuOpen] = useState(false);
-  const [unitMenuOpen, setUnitMenuOpen] = useState(false);
-  const [timePickerOpen, setTimePickerOpen] = useState(false);
-
-  const anyFilterOpen = scopeMenuOpen || unitMenuOpen;
-  useEffect(() => {
-    if (anyFilterOpen) {
-      document.body.style.overflow = 'hidden';
-      document.body.style.overscrollBehavior = 'none';
-    } else {
-      document.body.style.overflow = '';
-      document.body.style.overscrollBehavior = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-      document.body.style.overscrollBehavior = '';
-    };
-  }, [anyFilterOpen]);
-
-  const closeOnOutside = useCallback((e: MouseEvent) => {
-    const t = e.target as HTMLElement;
-    if (t.closest('#scopeDropdownWrap') || t.closest('#unitDropdownWrap')) return;
-    setScopeMenuOpen(false);
-    setUnitMenuOpen(false);
-  }, []);
-
-  useEffect(() => {
-    if (scopeMenuOpen || unitMenuOpen) {
-      setTimeout(() => document.addEventListener('click', closeOnOutside), 0);
-    } else {
-      document.removeEventListener('click', closeOnOutside);
-    }
-    return () => document.removeEventListener('click', closeOnOutside);
-  }, [scopeMenuOpen, unitMenuOpen, closeOnOutside]);
 
   const scopes = meta?.scopes ?? [];
   const filteredUnits = meta ? filterGroupTypesForUnitDropdown(meta.groupTypes) : [];
@@ -110,129 +72,87 @@ export function FilterPanel({
   return (
     <div
       id="filterPanel"
-      className={`flex-shrink-0 transition-all duration-150 max-xl:!w-full ${timePickerOpen ? 'overflow-visible' : 'overflow-hidden'}`}
-      style={{ width: filterCollapsed ? '60px' : '20rem' }}
+      className={`insight-filter-panel flex-shrink-0 overflow-visible transition-all duration-150 ${filterCollapsed ? 'is-collapsed' : ''}`}
     >
-      <div className="sticky top-6 rounded-xl border border-border bg-card p-4 shadow-sm max-xl:static">
+      <div className="insight-filter-card sticky top-6 rounded-xl border border-border bg-card p-4 shadow-sm max-xl:static">
         <button
           type="button"
           id="filterToggle"
           title={t('insight.filterPanelToggleTitle')}
+          aria-expanded={!filterCollapsed}
+          aria-controls="filterContent"
           onClick={onToggleCollapse}
-          className="mb-4 flex w-full cursor-pointer items-center gap-2 rounded-lg text-sm font-semibold text-foreground outline-none transition-colors duration-150 hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
-          style={{ justifyContent: filterCollapsed ? 'center' : 'space-between' }}
+          className="insight-filter-toggle mb-4 flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg text-sm font-semibold text-foreground outline-none transition-colors duration-150 hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <div className="flex min-w-0 items-center gap-2" style={{ display: filterCollapsed ? 'none' : 'flex' }}>
+          <div className="insight-filter-toggle-label flex min-w-0 items-center gap-2">
             <Icon icon="mdi:filter" className="flex-shrink-0" />
-            <span id="filterTitleText" className="truncate">
-              {t('insight.filterConditions')}
+            <span className="min-w-0">
+              <span id="filterTitleText" className="block truncate">
+                {t('insight.filterConditions')}
+              </span>
+              <span className="insight-filter-toggle-summary block truncate text-xs font-normal text-muted-foreground">
+                {scopeLabel} · {unitLabel}
+              </span>
             </span>
           </div>
           <Icon
             id="filterToggleIcon"
-            icon={filterCollapsed ? 'mdi:chevron-down' : 'mdi:chevron-up'}
+            icon={filterCollapsed ? 'mdi:chevron-left' : 'mdi:chevron-right'}
             className="flex-shrink-0 transition-transform duration-150"
-            style={{ transform: filterCollapsed ? 'rotate(180deg)' : 'rotate(0deg)' }}
           />
         </button>
-        <div id="filterContent" className="space-y-4" style={{ display: filterCollapsed ? 'none' : 'block' }}>
+        <div id="filterContent" className={`space-y-4 ${filterCollapsed ? 'hidden' : ''}`}>
           <div>
             <label className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <Icon icon="mdi:earth" />
               <span>{t('insight.leaderboardScope')}</span>
             </label>
-            <div className="filter-dropdown relative" id="scopeDropdownWrap">
-              <button
-                type="button"
-                id="scopeSelectTrigger"
-                className="filter-select-trigger h-10 w-full cursor-pointer rounded-lg border border-input bg-background px-3 py-2 text-left text-sm text-foreground outline-none transition-[background-color,border-color,box-shadow] duration-150 focus:border-primary focus:ring-2 focus:ring-ring"
-                aria-haspopup="listbox"
-                aria-expanded={scopeMenuOpen}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setUnitMenuOpen(false);
-                  setScopeMenuOpen((o) => !o);
-                }}
-              >
-                <span id="scopeSelectLabel">{scopeLabel}</span>
-              </button>
-              <div
-                id="scopeDropdownMenu"
-                className={`filter-dropdown-menu ${scopeMenuOpen ? 'show' : ''}`}
-                role="listbox"
-                onWheel={preventFilterDropdownScrollChaining}
-              >
+            <Select value={scopeValue} onValueChange={(value) => onScopeChange(value)} disabled={!scopes.length}>
+              <SelectTrigger id="scopeSelectTrigger" className="h-10 bg-background">
+                <SelectValue placeholder={scopeLabel} />
+              </SelectTrigger>
+              <SelectContent>
                 {scopes.map((s) => {
                   const name = s.name ?? s.name_zh ?? '';
                   if (!name) return null;
                   const display = lang === 'zh' ? (s.name_zh ?? s.name ?? name) : (s.name ?? s.name_zh ?? name);
-                  const active = name === scopeValue;
                   return (
-                    <div
+                    <SelectItem
                       key={name}
-                      role="option"
-                      className={`filter-dropdown-item ${active ? 'active' : ''}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onScopeChange(name);
-                        setScopeMenuOpen(false);
-                      }}
+                      value={name}
                     >
                       {display}
-                    </div>
+                    </SelectItem>
                   );
                 })}
-              </div>
-            </div>
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <label className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <Icon icon="mdi:chart-bar" />
               <span>{t('insight.rankingUnit')}</span>
             </label>
-            <div className="filter-dropdown relative" id="unitDropdownWrap">
-              <button
-                type="button"
-                id="unitSelectTrigger"
-                className="filter-select-trigger h-10 w-full cursor-pointer rounded-lg border border-input bg-background px-3 py-2 text-left text-sm text-foreground outline-none transition-[background-color,border-color,box-shadow] duration-150 focus:border-primary focus:ring-2 focus:ring-ring"
-                aria-haspopup="listbox"
-                aria-expanded={unitMenuOpen}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setScopeMenuOpen(false);
-                  setUnitMenuOpen((o) => !o);
-                }}
-              >
-                <span id="unitSelectLabel">{unitLabel}</span>
-              </button>
-              <div
-                id="unitDropdownMenu"
-                className={`filter-dropdown-menu ${unitMenuOpen ? 'show' : ''}`}
-                role="listbox"
-                onWheel={preventFilterDropdownScrollChaining}
-              >
+            <Select value={unitValue} onValueChange={(value) => onUnitChange(value)} disabled={!filteredUnits.length}>
+              <SelectTrigger id="unitSelectTrigger" className="h-10 bg-background">
+                <SelectValue placeholder={unitLabel} />
+              </SelectTrigger>
+              <SelectContent>
                 {filteredUnits.map((g) => {
                   const name = g.name ?? g.name_zh ?? '';
                   if (!name) return null;
                   const display = lang === 'zh' ? (g.name_zh ?? g.name ?? name) : (g.name ?? g.name_zh ?? name);
-                  const active = name === unitValue;
                   return (
-                    <div
+                    <SelectItem
                       key={name}
-                      role="option"
-                      className={`filter-dropdown-item ${active ? 'active' : ''}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onUnitChange(name);
-                        setUnitMenuOpen(false);
-                      }}
+                      value={name}
                     >
                       {display}
-                    </div>
+                    </SelectItem>
                   );
                 })}
-              </div>
-            </div>
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <label className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
@@ -282,7 +202,6 @@ export function FilterPanel({
               t={t}
               onValueChange={onTimeValueChange}
               onCommit={onTimeCommit}
-              onOpenChange={setTimePickerOpen}
             />
           </div>
           <div>

@@ -1,4 +1,8 @@
-import * as echarts from 'echarts';
+import { MapChart } from 'echarts/charts';
+import { GeoComponent, TooltipComponent, VisualMapComponent } from 'echarts/components';
+import * as echarts from 'echarts/core';
+import { CanvasRenderer } from 'echarts/renderers';
+import type { ECharts, EChartsOption } from 'echarts';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'next-themes';
@@ -11,6 +15,8 @@ type Props = {
   contributions: ContributionRow[];
 };
 
+echarts.use([MapChart, GeoComponent, TooltipComponent, VisualMapComponent, CanvasRenderer]);
+
 function readThemeColor(name: string, fallback: string): string {
   const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   return value || fallback;
@@ -21,8 +27,8 @@ export function ContributionMap({ contributions }: Props) {
   const { resolvedTheme } = useTheme();
   const lang = normalizeInsightLang(i18n.language);
   const containerRef = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<echarts.ECharts | null>(null);
-  const optionRef = useRef<echarts.EChartsOption | null>(null);
+  const chartRef = useRef<ECharts | null>(null);
+  const optionRef = useRef<EChartsOption | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [loadError, setLoadError] = useState(false);
 
@@ -67,7 +73,7 @@ export function ContributionMap({ contributions }: Props) {
       .then((worldJson) => {
         if (cancelled) return;
         echarts.registerMap('world', worldJson);
-        const option: echarts.EChartsOption = {
+        const option: EChartsOption = {
           backgroundColor: 'transparent',
           tooltip: {
             trigger: 'item',
@@ -161,7 +167,7 @@ export function ContributionMap({ contributions }: Props) {
   };
 
   return (
-    <div className="relative flex-1 min-w-0" style={{ width: '60%' }}>
+    <div className="relative min-w-0 flex-1">
       {!hasData && (
         <div
           id="contributionMapContainer"

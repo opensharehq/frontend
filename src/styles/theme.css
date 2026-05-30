@@ -42,6 +42,8 @@
   --ray-surface-soft: rgba(30, 41, 59, 0.72);
   --ray-border-soft: rgba(148, 163, 184, 0.18);
   --ray-highlight: rgba(226, 232, 240, 0.1);
+  --profile-blue-field: radial-gradient(circle at top right, color-mix(in srgb, var(--chart-2) 18%, transparent), transparent 66%);
+  --overlay-shadow: 0 24px 48px color-mix(in srgb, #020617 60%, transparent);
 
   /* 侧边栏 */
   --sidebar: #1E293B;
@@ -99,6 +101,8 @@
   --ray-surface-soft: rgba(255, 255, 255, 0.78);
   --ray-border-soft: rgba(23, 35, 27, 0.12);
   --ray-highlight: rgba(22, 163, 74, 0.08);
+  --profile-blue-field: radial-gradient(circle at top right, color-mix(in srgb, var(--chart-2) 14%, transparent), transparent 66%);
+  --overlay-shadow: 0 24px 48px color-mix(in srgb, #17231B 18%, transparent);
 
   --sidebar: #FFFFFF;
   --sidebar-foreground: #17231B;

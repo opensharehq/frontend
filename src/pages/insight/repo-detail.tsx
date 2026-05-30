@@ -1,18 +1,22 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { fetchItemMeta, fetchRepoTrendData } from './api/openDiggerTrend';
-import { getLabelDetailPath, getInsightHomePath } from './domain/routes';
+import { getLabelDetailPath } from './domain/routes';
 import { getRepoUrlByPlatform, normalizeRepoPlatform } from './domain/repoPlatform';
 import { normalizeInsightLang } from './domain/lang';
 import { TrendChart } from './components/TrendChart';
-import { ContributionMap } from './components/ContributionMap';
 import { RepoPlatformIcon } from './components/RepoPlatformIcon';
 import { LeaderboardAvatar } from './components/LeaderboardAvatar';
+import { InsightDetailNav } from './components/InsightDetailNav';
 import { inferredDeveloperAvatarUrl } from './domain/communityOpenRankDetails';
 import { EMPTY_TREND, pickTrendMode } from './domain/trends';
 import { preprocessContributions } from './domain/geography';
 import type { RepoTrendMap, MetaLabelEntry, ContributionRow, TrendSeries } from './types/api';
+
+const ContributionMap = lazy(() =>
+  import('./components/ContributionMap').then((module) => ({ default: module.ContributionMap })),
+);
 
 function getLatest(t: TrendSeries): number {
   const v = t.values;
@@ -100,12 +104,21 @@ export default function RepoDetailPage() {
 
   const contributionRows = preprocessContributions(contributions);
   const showContributionMap = contributionRows.length > 0;
+  const detailNav = (
+    <InsightDetailNav
+      homeLabel={t('insight.detailBreadcrumbHome')}
+      sectionLabel={t('insight.detailSectionRepoSingular')}
+      currentLabel={repoName}
+      backLabel={t('insight.detailBackToInsight')}
+    />
+  );
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-8">
+      <div className="mx-auto max-w-6xl px-4 py-8 space-y-6">
+        {detailNav}
         <div className="flex items-center justify-center h-64">
-          <div className="text-[#94A3B8] text-sm">{t('insight.loadingRepository')}</div>
+          <div className="text-sm text-muted-foreground">{t('insight.loadingRepository')}</div>
         </div>
       </div>
     );
@@ -113,16 +126,10 @@ export default function RepoDetailPage() {
 
   if (error) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-8">
+      <div className="mx-auto max-w-6xl px-4 py-8 space-y-6">
+        {detailNav}
         <div className="flex flex-col items-center justify-center h-64 gap-4">
-          <div className="text-red-500 text-sm">{error}</div>
-          <button
-            type="button"
-            onClick={() => navigate(getInsightHomePath())}
-            className="px-4 py-2 text-sm rounded-lg bg-[#334155] hover:bg-[#475569] text-[#E2E8F0] transition-colors"
-          >
-            {t('insight.detailBack')}
-          </button>
+          <div className="text-sm text-destructive">{error}</div>
         </div>
       </div>
     );
@@ -130,21 +137,23 @@ export default function RepoDetailPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 space-y-6">
+      {detailNav}
+
       {/* Repo Info Card */}
-      <div className="bg-[#1E293B] rounded-xl border border-[#475569] p-6">
-        <div className="flex items-start gap-4">
-          <div className="flex-shrink-0 w-32 h-32 relative">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="flex flex-col items-start gap-4 sm:flex-row">
+          <div className="relative size-20 flex-shrink-0 sm:size-32">
             <LeaderboardAvatar
               avatar={inferredDeveloperAvatarUrl(normalizedPlatform, owner || '')}
               displayName={owner || repoName}
-              sizeClass="w-32 h-32"
+              sizeClass="size-20 sm:size-32"
               bordered={false}
             />
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="flex items-center flex-wrap gap-2 mb-1">
-              <h1 className="text-xl font-semibold text-[#E2E8F0]">{repoName}</h1>
-              <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-blue-900/30 text-blue-400 border border-blue-700/50">
+              <h1 className="text-xl font-semibold text-balance break-all text-foreground">{repoName}</h1>
+              <span className="inline-block rounded border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                 {t('insight.detailSectionRepoSingular')}
               </span>
               {metaLabels.map((label, idx) => {
@@ -156,7 +165,7 @@ export default function RepoDetailPage() {
                     <button
                       key={idx}
                       type="button"
-                      className="inline-block px-2 py-0.5 rounded text-[11px] font-mono leading-tight bg-[#334155] text-[#E2E8F0] border border-[#475569] hover:border-primary/50 hover:text-primary transition-colors cursor-pointer"
+                      className="inline-block cursor-pointer rounded border border-border bg-secondary px-2 py-0.5 font-mono text-[11px] leading-tight text-secondary-foreground transition-colors hover:border-primary/50 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       onClick={() => navigate(getLabelDetailPath(label.id!))}
                     >
                       {text}
@@ -166,7 +175,7 @@ export default function RepoDetailPage() {
                 return (
                   <span
                     key={idx}
-                    className="inline-block px-2 py-0.5 rounded text-[11px] font-mono leading-tight bg-[#334155] text-[#94A3B8] border border-[#475569]"
+                    className="inline-block rounded border border-border bg-secondary px-2 py-0.5 font-mono text-[11px] leading-tight text-muted-foreground"
                   >
                     {text}
                   </span>
@@ -174,14 +183,14 @@ export default function RepoDetailPage() {
               })}
             </div>
             {description && (
-              <p className="mt-2 text-sm text-[#94A3B8] line-clamp-2">{description}</p>
+              <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{description}</p>
             )}
           </div>
           <a
             href={getRepoUrlByPlatform(normalizedPlatform, repoName)}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#334155] border border-[#475569] text-sm text-[#E2E8F0] hover:bg-[#475569] hover:border-[#64748B] transition-colors"
+            className="inline-flex w-full flex-shrink-0 items-center justify-center gap-2 rounded-lg border border-border bg-secondary px-4 py-2 text-sm text-secondary-foreground transition-colors hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-auto"
           >
             <RepoPlatformIcon platform={normalizedPlatform} size="sm" />
             <span>{t('insight.repoVisitExternal')}</span>
@@ -222,22 +231,24 @@ export default function RepoDetailPage() {
       </div>
 
       {/* Trend Charts */}
-      <div className="bg-[#1E293B] rounded-xl border border-[#475569] p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-base font-semibold text-[#E2E8F0]">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-base font-semibold text-foreground">
             {t('insight.detailHistoricalTrendHeading')}
           </h2>
-          <div className="flex rounded-lg bg-[#0F172A] border border-[#475569] p-0.5" role="group" aria-label={t('insight.detailTrendModeAria')}>
+          <div className="flex rounded-lg border border-border bg-background p-0.5" role="group" aria-label={t('insight.detailTrendModeAria')}>
             <button
               type="button"
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${trendMode === 'month' ? 'bg-[#334155] text-[#E2E8F0] shadow-sm' : 'text-[#94A3B8] hover:text-[#E2E8F0]'}`}
+              aria-pressed={trendMode === 'month'}
+              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${trendMode === 'month' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
               onClick={() => setTrendMode('month')}
             >
               {t('insight.detailTrendModeMonth')}
             </button>
             <button
               type="button"
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${trendMode === 'year' ? 'bg-[#334155] text-[#E2E8F0] shadow-sm' : 'text-[#94A3B8] hover:text-[#E2E8F0]'}`}
+              aria-pressed={trendMode === 'year'}
+              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${trendMode === 'year' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
               onClick={() => setTrendMode('year')}
             >
               {t('insight.detailTrendModeYear')}
@@ -245,7 +256,7 @@ export default function RepoDetailPage() {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-[#0F172A] rounded-lg p-4 border border-[#475569]">
+          <div className="rounded-lg border border-border bg-background p-4">
             <TrendChart
               values={influenceTrend.values}
               label={t('insight.detailChartInfluenceTrend')}
@@ -253,7 +264,7 @@ export default function RepoDetailPage() {
               noDataText={t('insight.noData')}
             />
           </div>
-          <div className="bg-[#0F172A] rounded-lg p-4 border border-[#475569]">
+          <div className="rounded-lg border border-border bg-background p-4">
             <TrendChart
               values={activityTrend.values}
               label={t('insight.detailChartActivityTrend')}
@@ -261,7 +272,7 @@ export default function RepoDetailPage() {
               noDataText={t('insight.noData')}
             />
           </div>
-          <div className="bg-[#0F172A] rounded-lg p-4 border border-[#475569]">
+          <div className="rounded-lg border border-border bg-background p-4">
             <TrendChart
               values={participantsTrend.values}
               label={t('insight.detailChartParticipantsTrend')}
@@ -269,7 +280,7 @@ export default function RepoDetailPage() {
               noDataText={t('insight.noData')}
             />
           </div>
-          <div className="bg-[#0F172A] rounded-lg p-4 border border-[#475569]">
+          <div className="rounded-lg border border-border bg-background p-4">
             <TrendChart
               values={issuePrTrend.values}
               label={t('insight.detailChartIssuePrTrend')}
@@ -284,14 +295,83 @@ export default function RepoDetailPage() {
 
       {/* Contribution Map */}
       {showContributionMap && (
-        <div className="bg-[#1E293B] rounded-xl border border-[#475569] p-6">
-          <h2 className="text-base font-semibold text-[#E2E8F0] mb-4">
+        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <h2 className="mb-4 text-base font-semibold text-foreground">
             {t('insight.detailContributionMapHeading')}
           </h2>
-          <ContributionMap contributions={contributions} />
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)]">
+            <div className="max-h-80 overflow-auto rounded-lg border border-border bg-background p-4">
+              <ContributionTable contributions={contributions} lang={lang} t={t} />
+            </div>
+            <Suspense fallback={<ContributionMapFallback />}>
+              <ContributionMap contributions={contributions} />
+            </Suspense>
+          </div>
         </div>
       )}
     </div>
+  );
+}
+
+function ContributionMapFallback() {
+  return (
+    <div
+      className="rounded-lg border border-border bg-background p-4"
+      style={{ height: 320 }}
+      aria-hidden="true"
+    />
+  );
+}
+
+function ContributionTable({
+  contributions,
+  lang,
+  t,
+}: {
+  contributions: ContributionRow[];
+  lang: 'zh' | 'en';
+  t: (k: string) => string;
+}) {
+  const rows = preprocessContributions(contributions).slice().sort((a, b) => b.openrank - a.openrank);
+  if (rows.length === 0) {
+    return <p className="py-4 text-center text-sm text-muted-foreground">{t('insight.noData')}</p>;
+  }
+
+  return (
+    <table className="w-full text-xs">
+      <thead>
+        <tr className="border-b border-border text-muted-foreground">
+          <th className="py-2 pr-3 text-left font-mono">#</th>
+          <th className="py-2 pr-3 text-left font-mono">{t('insight.contributionTableCountry')}</th>
+          <th className="py-2 pr-3 text-right font-mono">{t('insight.mapTooltipDevelopers')}</th>
+          <th className="py-2 text-right font-mono">{t('insight.headerOpenRank')}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row, index) => (
+          <tr key={`${row.mapName}-${index}`} className="border-b border-border/60">
+            <td className="py-2 pr-3 font-mono text-muted-foreground">{index + 1}</td>
+            <td className="py-2 pr-3 text-foreground">
+              {row.countryCode ? (
+                <img
+                  src={`https://flagcdn.com/24x18/${row.countryCode.toLowerCase()}.png`}
+                  alt=""
+                  className="mr-2 inline-block align-middle"
+                  style={{ width: 24, height: 18 }}
+                />
+              ) : null}
+              {lang === 'zh' ? row.displayNameZh : row.displayNameEn}
+            </td>
+            <td className="py-2 pr-3 text-right font-mono tabular-nums text-muted-foreground">
+              {(row.developers ?? 0).toLocaleString()}
+            </td>
+            <td className="py-2 text-right font-mono tabular-nums text-muted-foreground">
+              {row.openrank.toLocaleString()}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 

@@ -1,57 +1,21 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Icon } from '@iconify/react/offline';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './icons/registerMdiOffline';
 import { fetchLeaderboardData, fetchLeaderboardMeta } from './api/openLeaderboard';
-import { buildDataUrl, getItemTypeFromUnit, ITEMS_PER_PAGE } from './domain/leaderboard';
+import { buildDataUrl, getFilteredLeaderboardData, ITEMS_PER_PAGE, leaderboardItemKey } from './domain/leaderboard';
 import { computeInitialTimeValue } from './domain/timeRange';
 import { defaultScopeValue, defaultUnitValue, filterGroupTypesForUnitDropdown } from './domain/meta';
 import { formatUpdateTime } from './domain/format';
 import { normalizeInsightLang } from './domain/lang';
-import { getLabelDetailPath, getRepoDetailPath, getDeveloperDetailPath } from './domain/routes';
 import type { LeaderboardItem, LeaderboardMeta } from './types/api';
 import { FilterPanel } from './components/FilterPanel';
 import { SiteSearchBox } from '@/app/components/site-search-box';
 import { LeaderboardSection } from './components/LeaderboardSection';
 import { PaginationControl } from './components/PaginationControl';
 
-function ContentMessage({ type, message }: { type: 'error' | 'loading' | 'plain'; message: string }) {
-  const boxClass = 'rounded-xl border border-border bg-card shadow-sm';
-  const padding = type === 'loading' ? 'p-8' : 'p-6';
-  if (type === 'error') {
-    return (
-      <div className={`${boxClass} ${padding}`}>
-        <div className="text-center text-destructive">
-          <Icon icon="mdi:alert-circle" className="text-3xl mb-2" aria-hidden />
-          <p>{message}</p>
-        </div>
-      </div>
-    );
-  }
-  if (type === 'loading') {
-    return (
-      <div className={`${boxClass} ${padding}`}>
-        <div className="text-center text-muted-foreground">
-          <Icon icon="mdi:loading" className="text-3xl mb-2 animate-spin" aria-hidden />
-          <p>{message}</p>
-        </div>
-      </div>
-    );
-  }
-  return (
-    <div className={`${boxClass} ${padding}`}>
-      <div className="text-center text-muted-foreground">
-        <p>{message}</p>
-      </div>
-    </div>
-  );
-}
-
 export default function InsightPage() {
   const { t, i18n } = useTranslation();
   const lang = normalizeInsightLang(i18n.language);
-  const navigate = useNavigate();
 
   const [meta, setMeta] = useState<LeaderboardMeta | null>(null);
   const [metaError, setMetaError] = useState<string | null>(null);
@@ -66,6 +30,7 @@ export default function InsightPage() {
   const [boardLoading, setBoardLoading] = useState(false);
   const [boardError, setBoardError] = useState<string | null>(null);
   const [filterCollapsed, setFilterCollapsed] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const leaderboardRowsRef = useRef<HTMLDivElement>(null);
 
   // Fetch meta on mount
@@ -88,7 +53,7 @@ export default function InsightPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reloadKey]);
 
   // Fetch leaderboard data when filters change
   useEffect(() => {
@@ -113,25 +78,36 @@ export default function InsightPage() {
     return () => {
       cancelled = true;
     };
-  }, [filtersReady, scopeValue, unitValue, timeType, timeValue]);
+  }, [filtersReady, scopeValue, unitValue, timeType, timeValue, reloadKey]);
 
-  const filteredCount = leaderboardData.filter((item) => {
-    if (!searchKeyword.trim()) return true;
-    const k = searchKeyword.toLowerCase();
-    return (
-      (item.name || '').toLowerCase().includes(k) ||
-      (item.name_zh || '').toLowerCase().includes(k) ||
-      (item.id || '').toLowerCase().includes(k)
-    );
-  }).length;
+  const filteredLeaderboardData = useMemo(
+    () => getFilteredLeaderboardData(leaderboardData, searchKeyword),
+    [leaderboardData, searchKeyword],
+  );
+  const filteredCount = filteredLeaderboardData.length;
   const totalPages = Math.ceil(filteredCount / ITEMS_PER_PAGE);
+  const currentPageData = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredLeaderboardData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [currentPage, filteredLeaderboardData]);
+  const leaderboardRankByKey = useMemo(() => {
+    const rankMap = new Map<string, number>();
+    leaderboardData.forEach((item, index) => {
+      const key = leaderboardItemKey(item);
+      if (key && !rankMap.has(key)) {
+        rankMap.set(key, index + 1);
+      }
+    });
+    return rankMap;
+  }, [leaderboardData]);
 
   const scrollToLeaderboardRows = useCallback(() => {
     const el = leaderboardRowsRef.current;
     if (!el) return;
     const headerHeight = 80;
     const dataTop = el.getBoundingClientRect().top + window.scrollY - headerHeight;
-    window.scrollTo({ top: dataTop, behavior: 'smooth' });
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: dataTop, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
   }, []);
 
   const handlePageChange = useCallback(
@@ -148,103 +124,88 @@ export default function InsightPage() {
     setCurrentPage(1);
   }, []);
 
-  const handleRowClick = (item: LeaderboardItem) => {
-    const itemType = getItemTypeFromUnit(unitValue);
-    const rawId = item.id || '';
-    // Labels are identified by a leading ':' (or '#') prefix in their id.
-    // Repos use a numeric id, and their `owner/repo` full name lives in `name`.
-    const isLabelId = rawId.startsWith(':') || rawId.startsWith('#');
-    if (itemType === 'label' || isLabelId) {
-      navigate(getLabelDetailPath(rawId));
-    } else if (itemType === 'repo') {
-      // Prefer `name` (e.g. "owner/repo") over the numeric `id`.
-      const fullName = item.name && item.name.includes('/') ? item.name : rawId;
-      const [owner, repo] = fullName.split('/');
-      if (!owner || !repo) {
-        return;
-      }
-      navigate(getRepoDetailPath(item.platform || 'github', owner, repo));
-    } else {
-      navigate(getDeveloperDetailPath(item.platform || 'github', item.login || item.name || rawId));
-    }
-  };
+  const retryInsightData = useCallback(() => {
+    setMetaError(null);
+    setBoardError(null);
+    setReloadKey((key) => key + 1);
+  }, []);
 
   const updateTimeLabel = formatUpdateTime(meta?.updatedAt, lang);
 
   return (
-    <div className="mx-auto space-y-6">
-      {filtersReady && meta && !metaError ? (
-        <SiteSearchBox variant="insight" />
-      ) : null}
-      <div className="flex items-start gap-6 max-xl:flex-col">
-        {metaError ? (
-          <div className="flex-1 min-w-0">
-            <ContentMessage type="error" message={`${t('insight.error')}: ${metaError}`} />
-          </div>
-        ) : !filtersReady ? (
-          <div className="flex-1 min-w-0">
-            <ContentMessage type="loading" message={t('insight.loading')} />
-          </div>
-        ) : boardLoading ? (
-          <div className="flex-1 min-w-0">
-            <ContentMessage type="loading" message={t('insight.loading')} />
-          </div>
-        ) : boardError ? (
-          <div className="flex-1 min-w-0">
-            <ContentMessage type="error" message={`${t('insight.error')}: ${boardError}`} />
-          </div>
-        ) : (
+    <div className="insight-layout-v1">
+      <div className="insight-v1-header">
+        {filtersReady && meta && !metaError ? (
+          <SiteSearchBox variant="insight" />
+        ) : null}
+        {updateTimeLabel && (
+          <p className="insight-update-label">{updateTimeLabel}</p>
+        )}
+      </div>
+      <div className={`insight-merged insight-merged-console ${filterCollapsed ? 'insight-merged-console--filters-collapsed' : ''}`}>
+        <section className="insight-console-board" aria-label={t('nav.insight')}>
           <LeaderboardSection
             ref={leaderboardRowsRef}
             meta={meta}
             data={leaderboardData}
+            currentPageData={currentPageData}
+            totalItems={filteredCount}
+            rankByKey={leaderboardRankByKey}
             unitName={unitValue}
             scopeName={scopeValue}
+            timeType={timeType}
+            timeValue={timeValue}
+            updateTimeLabel={updateTimeLabel}
             searchKeyword={searchKeyword}
             currentPage={currentPage}
-            onRowClick={handleRowClick}
+            loading={!metaError && !boardError && (!filtersReady || boardLoading)}
+            error={metaError || boardError}
+            onRetry={retryInsightData}
+            onClearSearch={() => {
+              setSearchKeyword('');
+              setCurrentPage(1);
+            }}
           />
-        )}
-        <FilterPanel
-          meta={meta}
-          scopeValue={scopeValue}
-          unitValue={unitValue}
-          timeType={timeType}
-          timeValue={timeValue}
-          searchKeyword={searchKeyword}
-          onScopeChange={(v) => {
-            setScopeValue(v);
-            commitFilterChange();
-          }}
-          onUnitChange={(v) => {
-            setUnitValue(v);
-            commitFilterChange();
-          }}
-          onTimeTypeChange={setTimeType}
-          onTimeValueChange={setTimeValue}
-          onSearchChange={(v) => {
-            setSearchKeyword(v);
-            setCurrentPage(1);
-          }}
-          onSearchClear={() => {
-            setSearchKeyword('');
-            setCurrentPage(1);
-          }}
-          onTimeCommit={commitFilterChange}
-          filterCollapsed={filterCollapsed}
-          onToggleCollapse={() => setFilterCollapsed((c) => !c)}
-          paginationSlot={
-            <PaginationControl
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          }
-        />
+        </section>
+        <aside className="insight-console-panel" aria-label={t('insight.filterConditions')}>
+          <FilterPanel
+            meta={meta}
+            scopeValue={scopeValue}
+            unitValue={unitValue}
+            timeType={timeType}
+            timeValue={timeValue}
+            searchKeyword={searchKeyword}
+            onScopeChange={(v) => {
+              setScopeValue(v);
+              commitFilterChange();
+            }}
+            onUnitChange={(v) => {
+              setUnitValue(v);
+              commitFilterChange();
+            }}
+            onTimeTypeChange={setTimeType}
+            onTimeValueChange={setTimeValue}
+            onSearchChange={(v) => {
+              setSearchKeyword(v);
+              setCurrentPage(1);
+            }}
+            onSearchClear={() => {
+              setSearchKeyword('');
+              setCurrentPage(1);
+            }}
+            onTimeCommit={commitFilterChange}
+            filterCollapsed={filterCollapsed}
+            onToggleCollapse={() => setFilterCollapsed((c) => !c)}
+            paginationSlot={
+              <PaginationControl
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            }
+          />
+        </aside>
       </div>
-      {updateTimeLabel && (
-        <p className="text-center text-sm text-muted-foreground">{updateTimeLabel}</p>
-      )}
     </div>
   );
 }

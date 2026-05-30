@@ -1,5 +1,5 @@
 import { Icon } from '@iconify/react/offline';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { Lang, LeaderboardMeta } from '../types/api';
 import { normalizeInsightLang } from '../domain/lang';
 import { formatTimeDisplay, getTimeBounds, type TimeBounds } from '../domain/timeRange';
@@ -43,6 +43,8 @@ export function TimeRangePicker({
 }: Props) {
   const normalizedLang = normalizeInsightLang(lang);
   const [open, setOpen] = useState(false);
+  const dropdownId = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     onOpenChange?.(open);
@@ -148,7 +150,16 @@ export function TimeRangePicker({
           <span>{t('insight.timeSelection')}</span>
         </label>
       ) : null}
-      <div ref={wrapRef} className="relative">
+      <div
+        ref={wrapRef}
+        className="relative"
+        onKeyDown={(e) => {
+          if (e.key !== 'Escape' || !open) return;
+          e.stopPropagation();
+          setOpen(false);
+          triggerRef.current?.focus();
+        }}
+      >
         <div
           className={`flex items-center overflow-hidden border border-border bg-background ${dense ? 'rounded-md' : 'rounded-lg'}`}
         >
@@ -165,7 +176,11 @@ export function TimeRangePicker({
             <Icon icon="mdi:chevron-left" className={dense ? 'text-sm' : 'text-lg'} aria-hidden />
           </button>
           <button
+            ref={triggerRef}
             type="button"
+            aria-haspopup="dialog"
+            aria-expanded={open}
+            aria-controls={dropdownId}
             onClick={(e) => {
               e.stopPropagation();
               setOpen((o) => !o);
@@ -187,7 +202,12 @@ export function TimeRangePicker({
             <Icon icon="mdi:chevron-right" className={dense ? 'text-sm' : 'text-lg'} aria-hidden />
           </button>
         </div>
-        <div className={`time-picker-dropdown ${open ? 'show' : ''}${dense ? ' time-picker-dropdown--dense' : ''}`}>
+        <div
+          id={dropdownId}
+          className={`time-picker-dropdown ${open ? 'show' : ''}${dense ? ' time-picker-dropdown--dense' : ''}`}
+          role="dialog"
+          aria-label={t('insight.timeSelection')}
+        >
           <div className={`flex items-center justify-between gap-2 ${dense ? 'mb-2' : 'mb-3'}`}>
             <button
               type="button"
@@ -229,6 +249,7 @@ export function TimeRangePicker({
                     key={month}
                     type="button"
                     disabled={!isInRange}
+                    aria-pressed={isActive}
                     onClick={(e) => {
                       e.stopPropagation();
                       selectMonth(month);

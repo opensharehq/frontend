@@ -45,14 +45,18 @@ export function buildDataUrl(params: {
 
 export function getFilteredLeaderboardData(data: LeaderboardItem[] | null | undefined, searchKeyword: string): LeaderboardItem[] {
   const list = data && Array.isArray(data) ? data : [];
-  if (!searchKeyword) return list;
-  const keywordLower = searchKeyword.toLowerCase();
+  const keywordLower = searchKeyword.trim().toLowerCase();
+  if (!keywordLower) return list;
   return list.filter((item) => {
     const name = (item.name || '').toLowerCase();
     const nameZh = (item.name_zh || '').toLowerCase();
     const id = (item.id || '').toLowerCase();
     return name.includes(keywordLower) || nameZh.includes(keywordLower) || id.includes(keywordLower);
   });
+}
+
+export function leaderboardItemKey(item: LeaderboardItem): string {
+  return item.id || `${item.name || ''}:${item.name_zh || ''}`;
 }
 
 export function getItemTypeFromUnit(unitName: string): 'repo' | 'developer' | 'label' {

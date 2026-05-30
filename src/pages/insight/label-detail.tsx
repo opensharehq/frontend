@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { fetchItemMeta, fetchLabelTrendData } from './api/openDiggerTrend';
 import { fetchCommunityOpenRankDetails } from './api/communityOpenRankDetails';
-import { getLabelDetailPath, getDeveloperDetailPath, getInsightHomePath } from './domain/routes';
+import { getLabelDetailPath, getDeveloperDetailPath } from './domain/routes';
 import { TrendChart } from './components/TrendChart';
-import { ContributionMap } from './components/ContributionMap';
 import { CommunityDeveloperOpenRank } from './components/CommunityDeveloperOpenRank';
 import { LeaderboardAvatar } from './components/LeaderboardAvatar';
 import { RepoPlatformIcon } from './components/RepoPlatformIcon';
+import { InsightDetailNav } from './components/InsightDetailNav';
 import { enrichLabelItemWithMeta, getLabelDetailDescriptionFromMeta } from './domain/detailHelpers';
 import { preprocessContributions } from './domain/geography';
 import { normalizeInsightLang } from './domain/lang';
@@ -24,6 +24,10 @@ import type {
   RepoTrendMap,
 } from './types/api';
 import type { CommunityOpenRankDetailsFile } from './domain/communityOpenRankDetails';
+
+const ContributionMap = lazy(() =>
+  import('./components/ContributionMap').then((module) => ({ default: module.ContributionMap })),
+);
 
 function getChangePct(latest: number, prev: number): string {
   if (!prev || prev === 0) return latest > 0 ? '100' : '0';
@@ -49,6 +53,21 @@ function getStatDelta(t: { values?: number[] } | null, latest: number, prev: num
 const statDeltaFormatter = new Intl.NumberFormat(undefined, {
   maximumFractionDigits: 1,
 });
+
+function getLabelBreadcrumbSection(labelId: string, labelType: string | null | undefined, t: (key: string) => string) {
+  const normalizedType = labelType || '';
+  const namespace = labelId.split('/')[0]?.toLowerCase() || '';
+  if (normalizedType === 'Project' || namespace === 'projects') return t('insight.detailSectionProject');
+  if (normalizedType === 'Foundation' || namespace === 'foundations') return t('insight.detailSectionFoundation');
+  if (
+    ['Company', 'University-0', 'Institution-0', 'Agency-0'].includes(normalizedType) ||
+    ['companies', 'universities', 'institutions', 'agencies'].includes(namespace)
+  ) {
+    return t('insight.detailSectionEntity');
+  }
+  if (normalizedType === 'repo' || namespace === 'repos') return t('insight.detailSectionRepoSingular');
+  return t('insight.leaderboard');
+}
 
 function StatCard({
   icon,
@@ -126,6 +145,8 @@ export default function LabelDetailPage() {
   const [metaDescZh, setMetaDescZh] = useState<string | null>(null);
   const [contributions, setContributions] = useState<ContributionRow[]>([]);
   const [communityOpenRankDetails, setCommunityOpenRankDetails] = useState<CommunityOpenRankDetailsFile | null>(null);
+  const breadcrumbSectionLabel = getLabelBreadcrumbSection(labelId, metaLabelType, t);
+  const fallbackCurrentLabel = labelId || t('insight.leaderboard');
 
   useEffect(() => {
     if (!labelId) return;
@@ -183,7 +204,13 @@ export default function LabelDetailPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-8">
+      <div className="mx-auto max-w-5xl px-4 py-8 space-y-6">
+        <InsightDetailNav
+          homeLabel={t('insight.detailBreadcrumbHome')}
+          sectionLabel={breadcrumbSectionLabel}
+          currentLabel={fallbackCurrentLabel}
+          backLabel={t('insight.detailBackToInsight')}
+        />
         <div className="flex flex-col items-center justify-center gap-4 py-16 text-muted-foreground">
           <svg className="size-10 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -197,12 +224,15 @@ export default function LabelDetailPage() {
 
   if (error || !item) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-8">
+      <div className="mx-auto max-w-5xl px-4 py-8 space-y-6">
+        <InsightDetailNav
+          homeLabel={t('insight.detailBreadcrumbHome')}
+          sectionLabel={breadcrumbSectionLabel}
+          currentLabel={fallbackCurrentLabel}
+          backLabel={t('insight.detailBackToInsight')}
+        />
         <div className="flex flex-col items-center justify-center gap-4 py-16 text-muted-foreground">
           <p className="font-mono">{error || t('insight.noData')}</p>
-          <Link to={getInsightHomePath()} className="text-primary hover:underline text-sm">
-            {t('insight.detailBack')}
-          </Link>
         </div>
       </div>
     );
@@ -287,6 +317,13 @@ export default function LabelDetailPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 space-y-6">
+      <InsightDetailNav
+        homeLabel={t('insight.detailBreadcrumbHome')}
+        sectionLabel={breadcrumbSectionLabel}
+        currentLabel={displayName || fallbackCurrentLabel}
+        backLabel={t('insight.detailBackToInsight')}
+      />
+
       {/* Label Info Card */}
       <div className="rounded-xl border border-border bg-card p-6">
         <div className="flex items-start gap-4">
@@ -478,7 +515,9 @@ export default function LabelDetailPage() {
                 <ContributionTable contributions={contributions} lang={lang} t={t} />
               </div>
             </div>
-            <ContributionMap contributions={contributions} />
+            <Suspense fallback={<ContributionMapFallback />}>
+              <ContributionMap contributions={contributions} />
+            </Suspense>
           </div>
         </div>
       )}
@@ -504,6 +543,18 @@ export default function LabelDetailPage() {
           />
         </div>
       )}
+    </div>
+  );
+}
+
+function ContributionMapFallback() {
+  return (
+    <div className="relative flex-1 min-w-0" style={{ width: '60%' }}>
+      <div
+        className="rounded-lg border border-border bg-background p-4"
+        style={{ height: 320 }}
+        aria-hidden="true"
+      />
     </div>
   );
 }

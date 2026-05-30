@@ -16,148 +16,232 @@
 
 @media (prefers-reduced-motion: reduce) {
   .transition-all,
-  .animate-spin {
+  .animate-spin,
+  .insight-filter-panel,
+  .insight-filter-toggle,
+  .leaderboard-row,
+  .trend-chart-tooltip,
+  .time-picker-dropdown,
+  .time-picker-month-btn {
     animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  html {
+    scroll-behavior: auto !important;
   }
 }
 
-/* ===== Page Dropdown ===== */
-.page-dropdown {
+/* ===== Insight home layout ===== */
+.insight-layout-v1 {
   position: relative;
-  display: inline-block;
+  isolation: isolate;
+  max-width: 92rem;
+  margin-inline: auto;
+  padding-inline: clamp(0rem, 1vw, 1rem);
 }
 
-.page-dropdown-menu {
+.insight-layout-v1::before {
+  content: "";
   position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  margin-top: 0.25rem;
-  background: var(--popover);
+  inset: -1rem -0.75rem auto;
+  height: 18rem;
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 86% 18%, color-mix(in srgb, var(--chart-2) 24%, transparent), transparent 58%),
+    radial-gradient(circle at 12% 12%, color-mix(in srgb, var(--primary) 18%, transparent), transparent 52%);
+  opacity: 0.28;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.insight-v1-header {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.insight-v1-header > .px-0 {
+  padding-block: 0;
+}
+
+.insight-v1-header .max-w-4xl {
+  max-width: 100%;
+}
+
+.insight-update-label {
+  margin: 0;
+  text-align: right;
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
+}
+
+.insight-merged-console {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(15rem, 18.5rem);
+  gap: 0;
+  min-width: 0;
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  box-shadow: 0 16px 40px rgba(2, 6, 23, 0.36);
-  z-index: 50;
-  max-height: 200px;
-  overflow-y: auto;
-  min-width: 80px;
-  display: none;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) var(--card);
-}
-
-.page-dropdown-menu::-webkit-scrollbar {
-  width: 6px;
-}
-
-.page-dropdown-menu::-webkit-scrollbar-track {
+  border-radius: 14px;
   background: var(--card);
-  border-radius: 0.5rem;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--foreground) 7%, transparent);
 }
 
-.page-dropdown-menu::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
+.insight-merged-console--filters-collapsed {
+  grid-template-columns: minmax(0, 1fr) 3.75rem;
 }
 
-.page-dropdown-menu::-webkit-scrollbar-thumb:hover {
-  background: var(--muted-foreground);
+.insight-console-board {
+  min-width: 0;
+  border-right: 1px solid var(--border);
 }
 
-.page-dropdown-menu.show {
-  display: block;
+.insight-console-board #leaderboardTable {
+  border: 0;
+  border-radius: 0;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--primary) 12%, transparent), transparent 9rem),
+    var(--card);
+  box-shadow: none;
 }
 
-.page-dropdown-menu--dense {
-  max-height: 160px;
-}
-.page-dropdown-menu--dense .page-dropdown-item {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
+.insight-console-panel {
+  min-width: 0;
+  background: color-mix(in srgb, var(--secondary) 48%, var(--card));
 }
 
-.page-dropdown-item {
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  color: var(--foreground);
-  transition: background-color 0.15s, color 0.15s;
-  text-align: center;
+.insight-console-panel #filterPanel {
+  width: 100%;
+}
+
+.insight-console-panel #filterPanel > .sticky {
+  position: sticky;
+  top: 5.5rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.insight-filter-toggle {
+  min-height: 2.75rem;
+  padding-inline: 0.5rem;
+}
+
+.insight-filter-toggle-summary {
+  margin-top: 0.125rem;
+}
+
+.insight-filter-panel.is-collapsed .insight-filter-card {
+  padding-inline: 0.5rem;
+}
+
+.insight-filter-panel.is-collapsed .insight-filter-toggle {
+  justify-content: center;
+  margin-bottom: 0;
+}
+
+.insight-filter-panel.is-collapsed .insight-filter-toggle-label {
+  width: 1.25rem;
+  justify-content: center;
+}
+
+.insight-filter-panel.is-collapsed #filterTitleText,
+.insight-filter-panel.is-collapsed .insight-filter-toggle-summary {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
   white-space: nowrap;
+  border: 0;
 }
 
-.page-dropdown-item:hover {
-  background-color: var(--secondary);
-}
-
-.page-dropdown-item.active {
-  background-color: var(--insight-accent-light);
-  color: var(--insight-accent);
-}
-
-/* ===== Filter Select Trigger ===== */
-.filter-select-trigger {
-  -webkit-appearance: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  background-size: 1rem;
-  padding-right: 2.25rem;
-}
-.filter-select-trigger:hover {
-  border-color: color-mix(in srgb, var(--muted-foreground), transparent 30%);
-  background-color: var(--secondary);
-}
-
-/* ===== Filter Dropdown Menu ===== */
-.filter-dropdown-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  margin-top: 0.25rem;
-  background: var(--popover);
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  box-shadow: 0 16px 40px rgba(2, 6, 23, 0.36);
-  z-index: 50;
-  max-height: 200px;
-  overflow-y: auto;
-  overscroll-behavior: none;
+.insight-filter-panel.is-collapsed #filterToggleIcon {
   display: none;
+}
+
+.leaderboard-scroll {
+  overflow-x: auto;
   scrollbar-width: thin;
-  scrollbar-color: var(--border) var(--card);
+  scrollbar-color: var(--border) transparent;
 }
-.filter-dropdown-menu::-webkit-scrollbar {
-  width: 6px;
+
+.leaderboard-scroll::-webkit-scrollbar {
+  height: 8px;
 }
-.filter-dropdown-menu::-webkit-scrollbar-track {
-  background: var(--card);
-  border-radius: 0.5rem;
+
+.leaderboard-scroll::-webkit-scrollbar-track {
+  background: transparent;
 }
-.filter-dropdown-menu::-webkit-scrollbar-thumb {
+
+.leaderboard-scroll::-webkit-scrollbar-thumb {
   background: var(--border);
-  border-radius: 3px;
+  border-radius: 999px;
 }
-.filter-dropdown-menu::-webkit-scrollbar-thumb:hover {
-  background: var(--muted-foreground);
+
+.leaderboard-table-min {
+  min-width: 48rem;
 }
-.filter-dropdown-menu.show {
-  display: block;
-}
-.filter-dropdown-item {
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  color: var(--foreground);
-  transition: background-color 0.15s, color 0.15s;
-  font-size: 0.875rem;
-}
-.filter-dropdown-item:hover {
-  background-color: var(--secondary);
-}
-.filter-dropdown-item.active {
-  background-color: var(--insight-accent-light);
-  color: var(--insight-accent);
+
+@media (max-width: 1100px) {
+  .insight-merged-console {
+    grid-template-columns: 1fr;
+  }
+
+  .insight-merged-console--filters-collapsed {
+    grid-template-columns: 1fr;
+  }
+
+  .insight-console-board {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .insight-console-panel #filterPanel > .sticky {
+    position: static;
+  }
+
+  .insight-filter-panel.is-collapsed .insight-filter-card {
+    padding-inline: 1rem;
+  }
+
+  .insight-filter-panel.is-collapsed .insight-filter-toggle {
+    justify-content: space-between;
+  }
+
+  .insight-filter-panel.is-collapsed .insight-filter-toggle-label {
+    width: auto;
+    justify-content: flex-start;
+  }
+
+  .insight-filter-panel.is-collapsed #filterTitleText,
+  .insight-filter-panel.is-collapsed .insight-filter-toggle-summary {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    clip: auto;
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .insight-filter-panel.is-collapsed #filterToggleIcon {
+    display: block;
+    transform: rotate(90deg);
+  }
+
+  .insight-filter-panel:not(.is-collapsed) #filterToggleIcon {
+    transform: rotate(-90deg);
+  }
+
+  .leaderboard-table-min {
+    min-width: 46rem;
+  }
 }
 
 /* ===== Time Picker Dropdown ===== */
@@ -170,7 +254,7 @@
   background: var(--popover);
   border: 1px solid var(--border);
   border-radius: 0.75rem;
-  box-shadow: 0 16px 40px rgba(2, 6, 23, 0.36);
+  box-shadow: 0 8px 8px rgba(2, 6, 23, 0.24);
   z-index: 50;
   padding: 0.75rem;
   display: none;
@@ -219,7 +303,7 @@ button.time-picker-arrow:disabled {
   font-family: var(--font-mono);
   color: var(--foreground);
   white-space: nowrap;
-  box-shadow: 0 16px 40px rgba(2, 6, 23, 0.36);
+  box-shadow: 0 8px 8px rgba(2, 6, 23, 0.24);
   opacity: 0;
   visibility: hidden;
   transition:

@@ -22,7 +22,7 @@ export function DeltaDisplay({
   const display = isInt ? Math.round(Math.abs(value)) : Math.abs(value).toFixed(1);
   if (value > 0) {
     return (
-      <span className={`inline-flex items-center gap-0.5 ${textCls} font-semibold text-green-600`}>
+      <span className={`inline-flex items-center gap-0.5 ${textCls} font-semibold text-primary`}>
         <Icon icon="mdi:arrow-up" className={iconCls} aria-hidden />
         <span>{display}</span>
       </span>
@@ -30,7 +30,7 @@ export function DeltaDisplay({
   }
   if (value < 0) {
     return (
-      <span className={`inline-flex items-center gap-0.5 ${textCls} font-semibold text-red-500`}>
+      <span className={`inline-flex items-center gap-0.5 ${textCls} font-semibold text-destructive`}>
         <Icon icon="mdi:arrow-down" className={iconCls} aria-hidden />
         <span>{display}</span>
       </span>

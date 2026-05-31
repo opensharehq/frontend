@@ -103,12 +103,12 @@ export function FilterPanel({
         </button>
         <div id="filterContent" className={`space-y-4 ${filterCollapsed ? 'hidden' : ''}`}>
           <div>
-            <label className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <label id="scopeSelectLabel" className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <Icon icon="mdi:earth" />
               <span>{t('insight.leaderboardScope')}</span>
             </label>
             <Select value={scopeValue} onValueChange={(value) => onScopeChange(value)} disabled={!scopes.length}>
-              <SelectTrigger id="scopeSelectTrigger" className="h-10 bg-background">
+              <SelectTrigger id="scopeSelectTrigger" aria-labelledby="scopeSelectLabel scopeSelectTrigger" className="h-10 bg-background">
                 <SelectValue placeholder={scopeLabel} />
               </SelectTrigger>
               <SelectContent>
@@ -129,12 +129,12 @@ export function FilterPanel({
             </Select>
           </div>
           <div>
-            <label className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <label id="unitSelectLabel" className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <Icon icon="mdi:chart-bar" />
               <span>{t('insight.rankingUnit')}</span>
             </label>
             <Select value={unitValue} onValueChange={(value) => onUnitChange(value)} disabled={!filteredUnits.length}>
-              <SelectTrigger id="unitSelectTrigger" className="h-10 bg-background">
+              <SelectTrigger id="unitSelectTrigger" aria-labelledby="unitSelectLabel unitSelectTrigger" className="h-10 bg-background">
                 <SelectValue placeholder={unitLabel} />
               </SelectTrigger>
               <SelectContent>
@@ -155,7 +155,7 @@ export function FilterPanel({
             </Select>
           </div>
           <div>
-            <label className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <label id="timeTypeLabel" className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <Icon icon="mdi:calendar" />
               <span>{t('insight.timeRangeType')}</span>
             </label>
@@ -168,6 +168,7 @@ export function FilterPanel({
               <button
                 type="button"
                 id="timeTypeMonth"
+                aria-pressed={timeType === 'month'}
                 className={`detail-trend-toggle flex-1 rounded-md px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors ${timeType === 'month' ? 'active' : ''}`}
                 onClick={() => {
                   if (timeType === 'month') return;
@@ -181,6 +182,7 @@ export function FilterPanel({
               <button
                 type="button"
                 id="timeTypeYear"
+                aria-pressed={timeType === 'year'}
                 className={`detail-trend-toggle flex-1 rounded-md px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors ${timeType === 'year' ? 'active' : ''}`}
                 onClick={() => {
                   if (timeType === 'year') return;
@@ -205,7 +207,7 @@ export function FilterPanel({
             />
           </div>
           <div>
-            <label className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <label htmlFor="openLeaderboardSearchInput" className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <Icon icon="mdi:magnify" />
               <span>{t('insight.search')}</span>
             </label>

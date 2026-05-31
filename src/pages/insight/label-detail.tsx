@@ -100,7 +100,7 @@ function StatCard({
           </div>
           <div className="text-3xl font-bold tabular-nums text-card-foreground">{value.toLocaleString()}</div>
         </div>
-        <div className={`flex items-center gap-1.5 text-sm font-medium ${up ? 'text-emerald-600' : 'text-red-500'}`}>
+        <div className={`flex items-center gap-1.5 text-sm font-medium ${up ? 'text-primary' : 'text-destructive'}`}>
           <svg className="size-4 flex-shrink-0 self-center" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
             {up ? <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6h-6z" /> : <path d="M16 18l2.29-2.29-4.88-4.88-4 4L2 7.41 3.41 6l6 6 4-4 6.3 6.29L22 12v6h-6z" />}
           </svg>
@@ -204,7 +204,7 @@ export default function LabelDetailPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-8 space-y-6">
+      <div className="insight-detail-layout space-y-6">
         <InsightDetailNav
           homeLabel={t('insight.detailBreadcrumbHome')}
           sectionLabel={breadcrumbSectionLabel}
@@ -224,7 +224,7 @@ export default function LabelDetailPage() {
 
   if (error || !item) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-8 space-y-6">
+      <div className="insight-detail-layout space-y-6">
         <InsightDetailNav
           homeLabel={t('insight.detailBreadcrumbHome')}
           sectionLabel={breadcrumbSectionLabel}
@@ -316,7 +316,7 @@ export default function LabelDetailPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 space-y-6">
+    <div className="insight-detail-layout space-y-6">
       <InsightDetailNav
         homeLabel={t('insight.detailBreadcrumbHome')}
         sectionLabel={breadcrumbSectionLabel}
@@ -453,14 +453,16 @@ export default function LabelDetailPage() {
           >
             <button
               type="button"
-              className={`rounded-md px-3 py-1.5 font-mono text-xs transition-colors ${trendMode === 'month' ? 'border border-border bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              aria-pressed={trendMode === 'month'}
+              className={`rounded-md px-3 py-1.5 font-mono text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${trendMode === 'month' ? 'border border-border bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
               onClick={() => handleTrendModeChange('month')}
             >
               {t('insight.detailTrendModeMonth')}
             </button>
             <button
               type="button"
-              className={`rounded-md px-3 py-1.5 font-mono text-xs transition-colors ${trendMode === 'year' ? 'border border-border bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              aria-pressed={trendMode === 'year'}
+              className={`rounded-md px-3 py-1.5 font-mono text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${trendMode === 'year' ? 'border border-border bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
               onClick={() => handleTrendModeChange('year')}
             >
               {t('insight.detailTrendModeYear')}
@@ -509,11 +511,9 @@ export default function LabelDetailPage() {
           <h2 className="mb-3 text-sm font-mono font-semibold text-card-foreground">
             {t('insight.detailContributionMapHeading')}
           </h2>
-          <div className="flex gap-4">
-            <div className="flex-shrink-0" style={{ width: '40%' }}>
-              <div className="rounded-lg border border-border bg-background p-4" style={{ height: 320, overflowY: 'auto' }}>
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)]">
+            <div className="max-h-80 overflow-auto rounded-lg border border-border bg-background p-4">
                 <ContributionTable contributions={contributions} lang={lang} t={t} />
-              </div>
             </div>
             <Suspense fallback={<ContributionMapFallback />}>
               <ContributionMap contributions={contributions} />
@@ -549,13 +549,11 @@ export default function LabelDetailPage() {
 
 function ContributionMapFallback() {
   return (
-    <div className="relative flex-1 min-w-0" style={{ width: '60%' }}>
-      <div
-        className="rounded-lg border border-border bg-background p-4"
-        style={{ height: 320 }}
-        aria-hidden="true"
-      />
-    </div>
+    <div
+      className="rounded-lg border border-border bg-background p-4"
+      style={{ height: 320 }}
+      aria-hidden="true"
+    />
   );
 }
 

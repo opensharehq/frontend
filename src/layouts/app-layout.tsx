@@ -16,9 +16,8 @@ import {
   LogOut,
   Menu,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
-  PanelLeftClose,
-  PanelLeftOpen,
   BarChart3,
   Radar,
 } from 'lucide-react';
@@ -343,11 +342,11 @@ export function AppLayout() {
             aria-hidden="true"
           />
           <span className="relative flex h-8 w-5 items-center justify-center rounded-md border border-sidebar-border bg-sidebar text-sidebar-foreground/60 opacity-0 shadow-sm transition-[background-color,border-color,color,opacity] duration-150 motion-reduce:transition-none group-hover:border-sidebar-primary/35 group-hover:bg-sidebar-accent group-hover:text-sidebar-foreground group-hover:opacity-100 group-focus-visible:border-sidebar-primary/45 group-focus-visible:bg-sidebar-accent group-focus-visible:text-sidebar-foreground group-focus-visible:opacity-100 group-focus-visible:ring-2 group-focus-visible:ring-sidebar-ring">
-            {sidebarCollapsed ? (
-              <PanelLeftOpen className="size-3.5" strokeWidth={1.75} aria-hidden="true" />
-            ) : (
-              <PanelLeftClose className="size-3.5" strokeWidth={1.75} aria-hidden="true" />
-            )}
+            <ChevronLeft
+              className={`size-3.5 transition-transform duration-150 motion-reduce:transition-none ${sidebarCollapsed ? 'rotate-180' : ''}`}
+              strokeWidth={1.75}
+              aria-hidden="true"
+            />
           </span>
         </button>
       </aside>

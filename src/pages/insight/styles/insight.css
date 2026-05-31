@@ -41,16 +41,22 @@
   padding-inline: clamp(0rem, 1vw, 1rem);
 }
 
+.insight-detail-layout {
+  max-width: 92rem;
+  margin-inline: auto;
+  padding: 2rem clamp(0rem, 1vw, 1rem);
+}
+
 .insight-layout-v1::before {
   content: "";
   position: absolute;
-  inset: -1rem -0.75rem auto;
-  height: 18rem;
+  inset: -1rem -0.75rem;
   border-radius: 14px;
   background:
     radial-gradient(circle at 86% 18%, color-mix(in srgb, var(--chart-2) 24%, transparent), transparent 58%),
-    radial-gradient(circle at 12% 12%, color-mix(in srgb, var(--primary) 18%, transparent), transparent 52%);
-  opacity: 0.28;
+    radial-gradient(circle at 12% 12%, color-mix(in srgb, var(--primary) 18%, transparent), transparent 52%),
+    linear-gradient(180deg, color-mix(in srgb, var(--card) 72%, transparent), color-mix(in srgb, var(--background) 48%, transparent));
+  opacity: 0.34;
   pointer-events: none;
   z-index: -1;
 }
@@ -69,18 +75,12 @@
   max-width: 100%;
 }
 
-.insight-update-label {
-  margin: 0;
-  text-align: right;
-  font-size: 0.8125rem;
-  color: var(--muted-foreground);
-}
-
 .insight-merged-console {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(15rem, 18.5rem);
   gap: 0;
   min-width: 0;
+  overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--card);
@@ -93,12 +93,14 @@
 
 .insight-console-board {
   min-width: 0;
-  border-right: 1px solid var(--border);
+  border-radius: 14px 0 0 14px;
+  overflow: hidden;
+  box-shadow: inset -1px 0 0 var(--border);
 }
 
 .insight-console-board #leaderboardTable {
   border: 0;
-  border-radius: 0;
+  border-radius: inherit;
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--primary) 12%, transparent), transparent 9rem),
     var(--card);
@@ -107,6 +109,7 @@
 
 .insight-console-panel {
   min-width: 0;
+  border-radius: 0 14px 14px 0;
   background: color-mix(in srgb, var(--secondary) 48%, var(--card));
 }
 
@@ -186,6 +189,23 @@
   min-width: 48rem;
 }
 
+.page-select-trigger {
+  position: relative;
+  justify-content: center;
+}
+
+.page-select-trigger [data-slot="select-value"] {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding-inline: 1rem;
+  text-align: center;
+}
+
+.page-select-trigger svg {
+  position: absolute;
+  right: 0.5rem;
+}
+
 @media (max-width: 1100px) {
   .insight-merged-console {
     grid-template-columns: 1fr;
@@ -197,7 +217,12 @@
 
   .insight-console-board {
     border-right: 0;
-    border-bottom: 1px solid var(--border);
+    border-radius: 14px 14px 0 0;
+    box-shadow: inset 0 -1px 0 var(--border);
+  }
+
+  .insight-console-panel {
+    border-radius: 0 0 14px 14px;
   }
 
   .insight-console-panel #filterPanel > .sticky {

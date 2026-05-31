@@ -36,14 +36,14 @@ export function PaginationControl({
   const bar = (
     <div
       id={compact ? undefined : 'paginationContainer'}
-      className={`flex items-center overflow-hidden border border-border bg-background ${compact ? (dense ? 'h-7 rounded-md' : 'h-10 rounded-lg') : 'rounded-lg'}`}
+      className={`flex items-center overflow-hidden border border-border bg-background ${compact ? (dense ? 'h-10 rounded-md sm:h-7' : 'h-10 rounded-lg') : 'rounded-lg'}`}
     >
       <button
         type="button"
         id="prevPageBtn"
         disabled={currentPage === 1}
         onClick={() => onPageChange(currentPage - 1)}
-        className={`time-picker-arrow flex flex-shrink-0 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-secondary hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40 ${dense && compact ? 'size-7' : 'h-10 w-9'}`}
+        className={`time-picker-arrow flex flex-shrink-0 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-secondary hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40 ${dense && compact ? 'size-10 sm:size-7' : 'h-10 w-9'}`}
       >
         <Icon icon="mdi:chevron-left" className={dense && compact ? 'text-sm' : 'text-lg'} aria-hidden />
       </button>
@@ -56,7 +56,7 @@ export function PaginationControl({
             id="pageDropdownBtn"
             aria-label={selectPageLabel}
             size={dense && compact ? 'sm' : 'default'}
-            className={`rounded-none border-0 bg-transparent shadow-none focus-visible:ring-2 focus-visible:ring-ring ${dense && compact ? 'h-7 px-2 py-1 text-xs' : 'h-10 px-3 py-2.5 text-sm'}`}
+            className={`page-select-trigger rounded-none border-0 bg-transparent shadow-none focus-visible:ring-2 focus-visible:ring-ring ${dense && compact ? 'h-10 px-2 py-1 text-xs sm:h-7' : 'h-10 px-3 py-2.5 text-sm'}`}
           >
             <SelectValue>
               {currentPage} / {totalPages}
@@ -83,7 +83,7 @@ export function PaginationControl({
         id="nextPageBtn"
         disabled={currentPage === totalPages}
         onClick={() => onPageChange(currentPage + 1)}
-        className={`time-picker-arrow flex flex-shrink-0 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-secondary hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40 ${dense && compact ? 'size-7' : 'h-10 w-9'}`}
+        className={`time-picker-arrow flex flex-shrink-0 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-secondary hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40 ${dense && compact ? 'size-10 sm:size-7' : 'h-10 w-9'}`}
       >
         <Icon icon="mdi:chevron-right" className={dense && compact ? 'text-sm' : 'text-lg'} aria-hidden />
       </button>

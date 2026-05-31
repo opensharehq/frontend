@@ -135,21 +135,21 @@ export default function DeveloperDetailPage() {
       {
         key: 'influence',
         icon: 'mdi:lightning-bolt',
-        iconColor: 'text-purple-500',
+        iconColor: 'text-chart-3',
         label: t('insight.detailStatOpenRankInfluence'),
         trend: trendSeries.influence,
       },
       {
         key: 'activity',
         icon: 'mdi:chart-line',
-        iconColor: 'text-emerald-500',
+        iconColor: 'text-chart-2',
         label: t('insight.detailStatActivity'),
         trend: trendSeries.activity,
       },
       {
         key: 'openIssue',
         icon: 'mdi:clipboard-alert-outline',
-        iconColor: 'text-amber-500',
+        iconColor: 'text-chart-4',
         label: t('insight.detailStatOpenIssue'),
         trend: trendSeries.openIssue,
         isInt: true,
@@ -157,7 +157,7 @@ export default function DeveloperDetailPage() {
       {
         key: 'issueComment',
         icon: 'mdi:comment-outline',
-        iconColor: 'text-sky-500',
+        iconColor: 'text-chart-1',
         label: t('insight.detailStatIssueComment'),
         trend: trendSeries.issueComment,
         isInt: true,
@@ -165,7 +165,7 @@ export default function DeveloperDetailPage() {
       {
         key: 'openPull',
         icon: 'mdi:source-pull',
-        iconColor: 'text-indigo-500',
+        iconColor: 'text-primary',
         label: t('insight.detailStatOpenPull'),
         trend: trendSeries.openPull,
         isInt: true,
@@ -173,7 +173,7 @@ export default function DeveloperDetailPage() {
       {
         key: 'reviewComment',
         icon: 'mdi:comment-check-outline',
-        iconColor: 'text-rose-500',
+        iconColor: 'text-destructive',
         label: t('insight.detailStatReviewComment'),
         trend: trendSeries.reviewComment,
         isInt: true,
@@ -236,7 +236,7 @@ export default function DeveloperDetailPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-8">
+      <div className="insight-detail-layout">
         <div className="flex flex-col items-center justify-center gap-4 py-16 text-muted-foreground">
           <Icon icon="mdi:loading" className="text-4xl animate-spin" aria-hidden />
           <p>{t('insight.loadingUser')}</p>
@@ -247,7 +247,7 @@ export default function DeveloperDetailPage() {
 
   if (error || !ossMeta) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-8">
+      <div className="insight-detail-layout">
         <div className="flex flex-col items-center justify-center gap-4 py-16 text-muted-foreground">
           <Icon icon="mdi:database-off-outline" className="text-4xl" aria-hidden />
           <p className="text-center px-4">{t('insight.detailUserDataMissing')}</p>
@@ -260,7 +260,7 @@ export default function DeveloperDetailPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 space-y-6">
+    <div className="insight-detail-layout space-y-6">
       <InsightDetailNav
         homeLabel={t('insight.developerDetailBreadcrumbHome')}
         sectionLabel={t('insight.detailSectionDeveloper')}

@@ -138,9 +138,6 @@ export default function InsightPage() {
         {filtersReady && meta && !metaError ? (
           <SiteSearchBox variant="insight" />
         ) : null}
-        {updateTimeLabel && (
-          <p className="insight-update-label">{updateTimeLabel}</p>
-        )}
       </div>
       <div className={`insight-merged insight-merged-console ${filterCollapsed ? 'insight-merged-console--filters-collapsed' : ''}`}>
         <section className="insight-console-board" aria-label={t('nav.insight')}>

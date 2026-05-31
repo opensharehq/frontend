@@ -82,7 +82,7 @@ export function CommunityDeveloperOpenRank({
       <div className="flex flex-wrap items-start sm:items-center justify-between gap-3 mb-3">
         <h4 className="text-sm font-mono font-semibold text-card-foreground">{t('insight.detailCommunityDevelopersHeading')}</h4>
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end">
-          <div className="min-w-[9rem] w-40 sm:min-w-[9.5rem] sm:w-44 flex-shrink-0">
+          <div className="min-w-[9rem] w-40 flex-shrink-0 sm:min-w-[9.5rem] sm:w-44">
             <TimeRangePicker
               meta={meta}
               timeType={timeType}
@@ -97,7 +97,7 @@ export function CommunityDeveloperOpenRank({
             />
           </div>
           {totalPages > 0 ? (
-            <div className="w-[8rem] sm:w-36 flex-shrink-0">
+            <div className="w-[8rem] flex-shrink-0 sm:w-36">
               <PaginationControl
                 currentPage={page}
                 totalPages={totalPages}
@@ -110,11 +110,11 @@ export function CommunityDeveloperOpenRank({
           ) : null}
         </div>
       </div>
-      <div className="rounded-lg border border-border bg-card">
+      <div className="overflow-x-auto rounded-lg border border-border bg-card">
         {rows.length === 0 ? (
           <p className="py-8 text-center text-sm font-mono text-muted-foreground">{t('insight.noData')}</p>
         ) : (
-          <div className="divide-y divide-border/60">
+          <div className="min-w-[44rem] divide-y divide-border/60">
             <div
               className="flex items-center gap-2 bg-background px-2 py-2"
               role="row"
@@ -217,7 +217,7 @@ export function CommunityDeveloperOpenRank({
                           avatar: r.avatarUrl,
                         })
                       }
-                      className="rounded-lg border border-border bg-secondary p-1.5 text-primary transition-colors hover:border-primary/50 hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      className="flex size-10 items-center justify-center rounded-lg border border-border bg-secondary text-primary transition-colors hover:border-primary/50 hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-8"
                     >
                       <Icon icon="mdi:view-dashboard-outline" className="text-lg" aria-hidden />
                     </button>

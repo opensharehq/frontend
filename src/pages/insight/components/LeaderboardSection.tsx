@@ -215,7 +215,7 @@ export const LeaderboardSection = forwardRef<HTMLDivElement, Props>(function Lea
             currentPageData.map((item, index) => {
               const rank = rankByKey.get(leaderboardItemKey(item)) ?? startIndex + index + 1;
               const medalClass =
-                rank === 1 ? 'text-yellow-500' : rank === 2 ? 'text-muted-foreground' : rank === 3 ? 'text-orange-400' : 'text-muted-foreground';
+                rank === 1 ? 'text-chart-4' : rank === 2 ? 'text-muted-foreground' : rank === 3 ? 'text-chart-3' : 'text-muted-foreground';
               const medalIcon =
                 rank === 1
                   ? 'mdi:trophy'

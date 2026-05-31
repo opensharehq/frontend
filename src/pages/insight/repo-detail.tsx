@@ -115,7 +115,7 @@ export default function RepoDetailPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-8 space-y-6">
+      <div className="insight-detail-layout space-y-6">
         {detailNav}
         <div className="flex items-center justify-center h-64">
           <div className="text-sm text-muted-foreground">{t('insight.loadingRepository')}</div>
@@ -126,7 +126,7 @@ export default function RepoDetailPage() {
 
   if (error) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-8 space-y-6">
+      <div className="insight-detail-layout space-y-6">
         {detailNav}
         <div className="flex flex-col items-center justify-center h-64 gap-4">
           <div className="text-sm text-destructive">{error}</div>
@@ -136,7 +136,7 @@ export default function RepoDetailPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 space-y-6">
+    <div className="insight-detail-layout space-y-6">
       {detailNav}
 
       {/* Repo Info Card */}

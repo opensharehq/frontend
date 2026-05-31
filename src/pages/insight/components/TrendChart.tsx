@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { buildSmoothPath, getYAxisTicks } from '../domain/chartSvg';
 
 type Props = {
@@ -10,6 +10,7 @@ type Props = {
 
 export function TrendChart({ values, label, monthLabels, noDataText }: Props) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const hintId = useId();
 
   let labels: string[];
   if (monthLabels && monthLabels.length > 0) {
@@ -74,6 +75,7 @@ export function TrendChart({ values, label, monthLabels, noDataText }: Props) {
           tabIndex={0}
           role="img"
           aria-label={summary}
+          aria-describedby={hintId}
           onFocus={() => setActiveIndex((index) => index ?? latestIndex)}
           onBlur={() => setActiveIndex(null)}
           onMouseMove={(e) => {
@@ -116,6 +118,9 @@ export function TrendChart({ values, label, monthLabels, noDataText }: Props) {
             <span>{labels[0] || ''}</span>
             <span>{labels[labels.length - 1] || ''}</span>
           </div>
+          <span id={hintId} className="sr-only">
+            Use the left and right arrow keys to inspect data points.
+          </span>
         </div>
       </div>
     </div>

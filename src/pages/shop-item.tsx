@@ -113,7 +113,7 @@ export default function ShopItemPage() {
       }
     }
     fetchData();
-  }, [id]);
+  }, [id, t]);
 
   async function handleRedeem() {
     if (!item) return;

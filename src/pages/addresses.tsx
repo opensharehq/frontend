@@ -99,7 +99,7 @@ export default function AddressesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchAddresses();

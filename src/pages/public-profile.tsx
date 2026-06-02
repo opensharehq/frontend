@@ -75,7 +75,7 @@ export default function PublicProfilePage() {
         }
       })
       .finally(() => setLoading(false));
-  }, [username]);
+  }, [username, t]);
 
   if (loading) {
     return (

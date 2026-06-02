@@ -178,7 +178,7 @@ export default function TransactionsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, transactionType, pointType]);
+  }, [page, pageSize, transactionType, pointType, t]);
 
   useEffect(() => {
     fetchTransactions();

@@ -106,7 +106,7 @@ interface OrgInfo {
         toast.error(apiError.message || t('orgSettings.loadFailed'));
       })
       .finally(() => setLoading(false));
-  }, [slug, form]);
+  }, [slug, form, t]);
 
   async function onSubmit(values: SettingsFormValues) {
     setSaving(true);

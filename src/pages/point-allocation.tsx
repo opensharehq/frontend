@@ -215,7 +215,7 @@ export default function PointAllocationPage() {
       },
     ];
   });
-  const [projectOperation, setProjectOperation] = useState<string>("AND");
+  const projectOperation = "AND";
 
   // Strip preload params from the URL once consumed, so that refreshing or
   // navigating back does not re-add the same tag.
@@ -229,7 +229,7 @@ export default function PointAllocationPage() {
     }
     // Run only on mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [t]);
 
   // Step 3 - Time range
   const defaults = getDefaultMonths();
@@ -260,7 +260,7 @@ export default function PointAllocationPage() {
       }
     }
     fetchPools();
-  }, []);
+  }, [t]);
 
   // --- Tag search with debounce ---
   useEffect(() => {
@@ -282,7 +282,7 @@ export default function PointAllocationPage() {
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [tagSearchQuery]);
+  }, [tagSearchQuery, t]);
 
   // --- Derived ---
   const selectedPool = selectedPoolIndex !== null ? pools[selectedPoolIndex] : null;
@@ -764,23 +764,6 @@ export default function PointAllocationPage() {
             </div>
           )}
 
-          {/* 暂时隐藏多标签运算符选择，多标签默认按 AND（同时生效）处理 */}
-          {false && selectedTags.length >= 2 && (
-            <div className="space-y-2">
-              <Label>{t('pointAllocation.operation')}</Label>
-              <Select value={projectOperation} onValueChange={(v) => { setProjectOperation(v); setPreviewData(null); }}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="AND">AND</SelectItem>
-                  <SelectItem value="OR">OR</SelectItem>
-                  <SelectItem value="NOT">NOT</SelectItem>
-                  <SelectItem value="XOR">XOR</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
         </CardContent>
       </Card>
 

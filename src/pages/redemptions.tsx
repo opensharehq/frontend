@@ -68,7 +68,7 @@ export default function RedemptionsPage() {
       }
     }
     fetchRedemptions();
-  }, []);
+  }, [t]);
 
   if (loading) {
     return (

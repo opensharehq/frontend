@@ -40,7 +40,6 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
       console.error('[ErrorBoundary]', error, info);
     }
     this.props.onError?.(error, info);
@@ -174,7 +173,6 @@ export function useGlobalUnhandledErrorHandler() {
       if (isChunkLoadError(err)) {
         notifyChunkFailure();
       } else if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
         console.warn('[GlobalError]', event.error ?? event.message);
       }
     };
@@ -185,7 +183,6 @@ export function useGlobalUnhandledErrorHandler() {
       if (isChunkLoadError(err)) {
         notifyChunkFailure();
       } else if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
         console.warn('[UnhandledRejection]', reason);
       }
     };

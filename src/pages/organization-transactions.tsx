@@ -207,7 +207,7 @@ export default function OrganizationTransactionsPage() {
     } finally {
       setLoading(false);
     }
-  }, [slug, page, pageSize, transactionType, pointType]);
+  }, [slug, page, pageSize, transactionType, pointType, t]);
 
   useEffect(() => {
     fetchTransactions();

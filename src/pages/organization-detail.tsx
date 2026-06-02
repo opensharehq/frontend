@@ -79,7 +79,7 @@ export default function OrganizationDetailPage() {
         toast.error(apiError.message || t('organizations.loadDetailFailed'));
       })
       .finally(() => setLoading(false));
-  }, [slug]);
+  }, [slug, t]);
 
   if (loading) {
     return (

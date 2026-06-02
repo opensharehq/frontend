@@ -130,7 +130,7 @@ const PAGE_SIZE = 20;
 // ─── Simple Markdown renderer ───────────────────────────
 
 function renderMarkdown(content: string): string {
-  let html = content
+  const html = content
     // escape html
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")

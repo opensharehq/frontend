@@ -83,7 +83,7 @@ export default function ShopPage() {
       }
     }
     fetchItems();
-  }, []);
+  }, [t]);
 
   if (loading) {
     return (

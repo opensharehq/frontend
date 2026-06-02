@@ -32,14 +32,13 @@ export function buildDataUrl(params: {
   if (!scopeName || !groupTypeName || !timeValue) return null;
   const scopeLower = scopeName.toLowerCase();
   const groupTypeLower = groupTypeName.toLowerCase();
-  let timePart = '';
-  if (timeType === 'year') {
-    timePart = `${timeType}/${timeValue}`;
-  } else {
-    const [year, month] = timeValue.split('-');
-    const monthNoZero = parseInt(month, 10);
-    timePart = `${timeType}/${year}${monthNoZero}`;
-  }
+  const timePart = timeType === 'year'
+    ? `${timeType}/${timeValue}`
+    : (() => {
+      const [year, month] = timeValue.split('-');
+      const monthNoZero = parseInt(month, 10);
+      return `${timeType}/${year}${monthNoZero}`;
+    })();
   return `${DATA_BASE_URL}${scopeLower}/${groupTypeLower}/${timePart}/data.json`;
 }
 

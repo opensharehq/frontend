@@ -242,7 +242,7 @@ export default function LabelDetailPage() {
   const desc = getLabelDetailDescriptionFromMeta(lang === 'zh', metaDesc, metaDescZh, item);
 
   // Label type badge
-  let resolvedLabelType = item.label_type || metaLabelType;
+  const resolvedLabelType = item.label_type || metaLabelType;
   const metaLabelTypeMapKey = resolvedLabelType && isDivisionZeroTypeName(resolvedLabelType) ? 'Division-0' : resolvedLabelType;
   const labelTypeDesc =
     metaLabelTypeMapKey && LABEL_TYPE_MAP[metaLabelTypeMapKey]

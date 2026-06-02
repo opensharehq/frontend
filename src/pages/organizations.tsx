@@ -66,7 +66,7 @@ export default function OrganizationsPage() {
         toast.error(apiError.message || t('organizations.loadFailed'));
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   if (loading) {
     return (

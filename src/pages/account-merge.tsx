@@ -116,7 +116,7 @@ export default function AccountMergePage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchData();

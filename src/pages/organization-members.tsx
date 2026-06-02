@@ -123,7 +123,7 @@ export default function OrganizationMembersPage() {
         toast.error(apiError.message || t('orgMembers.loadFailed'));
       })
       .finally(() => setLoading(false));
-  }, [slug]);
+  }, [slug, t]);
 
   useEffect(() => {
     fetchMembers();

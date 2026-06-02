@@ -15,8 +15,7 @@ import { AgreementCheckbox } from '@/components/agreement-checkbox';
 //   1) backend/accounts/api_v1.py:SOCIAL_PROVIDERS
 //   2) backend/config/settings.py 中对应平台的 KEY/SECRET 环境变量
 //   3) 下方 getProviderDisplayName / getProviderIcon / getProviderLabel / getProviderClassName
-const ALL_SOCIAL_PROVIDERS = ['github', 'atomgit'] as const;
-type EnabledSocialProvider = (typeof ALL_SOCIAL_PROVIDERS)[number];
+type EnabledSocialProvider = 'github' | 'atomgit';
 
 // 默认仅展示 GitHub；区域检测失败或非中国大陆 IP 时保持此默认。
 const DEFAULT_VISIBLE_PROVIDERS: readonly EnabledSocialProvider[] = ['github'];

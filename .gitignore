@@ -85,3 +85,5 @@ publish.sh
 .vercel
 .env*
 .impeccable
+.agents/
+.claude/

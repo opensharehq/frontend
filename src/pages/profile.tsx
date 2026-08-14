@@ -24,6 +24,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import api, { getApiError } from '@/lib/api';
+import { getSocialApiBaseUrl } from '@/lib/social-api';
 import { getLocationLabel } from '@/services/geo-data';
 import { inferDeveloperAvatarUrl } from '@/pages/insight/domain/repoPlatform';
 import { Card, CardHeader, CardTitle, CardContent } from '@/app/components/ui/card';
@@ -459,7 +460,7 @@ export default function ProfilePage() {
   ].filter(Boolean) as { key: string; icon: LucideIcon; label: string }[];
 
   function handleConnectProvider(provider: string) {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+    const baseUrl = getSocialApiBaseUrl(provider);
     const accessToken = localStorage.getItem('access_token') ?? '';
     if (!accessToken) {
       toast.error(t('profile.loginExpired'));

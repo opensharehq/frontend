@@ -1,6 +1,11 @@
 import axios from 'axios';
 import { buildLoginPath, currentRedirectTarget } from '@/lib/redirect';
 
+interface TokenPair {
+  access_token: string;
+  refresh_token: string;
+}
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1',
   headers: { 'Content-Type': 'application/json' },
@@ -17,6 +22,30 @@ api.interceptors.request.use((config) => {
 
 // 响应拦截器：401 时自动刷新（登录/注册/刷新等认证端点除外，避免掩盖凭证错误）
 const AUTH_ENDPOINTS_SKIP_REFRESH = ['/auth/refresh', '/auth/social/exchange'];
+let refreshPromise: Promise<TokenPair> | null = null;
+
+function refreshTokens(): Promise<TokenPair> {
+  if (!refreshPromise) {
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (!refreshToken) return Promise.reject(new Error('No refresh token'));
+
+    refreshPromise = axios
+      .post<TokenPair>(`${api.defaults.baseURL}/auth/refresh`, {
+        refresh_token: refreshToken,
+      })
+      .then(({ data }) => {
+        localStorage.setItem('access_token', data.access_token);
+        localStorage.setItem('refresh_token', data.refresh_token);
+        return data;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+
+  return refreshPromise;
+}
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -26,14 +55,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
       try {
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (!refreshToken) throw new Error('No refresh token');
-        const { data } = await axios.post(
-          `${api.defaults.baseURL}/auth/refresh`,
-          { refresh_token: refreshToken }
-        );
-        localStorage.setItem('access_token', data.access_token);
-        localStorage.setItem('refresh_token', data.refresh_token);
+        const data = await refreshTokens();
         originalRequest.headers.Authorization = `Bearer ${data.access_token}`;
         return api(originalRequest);
       } catch {

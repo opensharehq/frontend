@@ -32,7 +32,7 @@ OpenShare Frontend 是 `open-share-frontend` 的 Vite + React + TypeScript 前�
 
 ## 运行要求
 
-- Node.js 18+ 与 npm
+- Node.js 20.19+、22.13+ 或 24+ 与 npm（版本范围与 ESLint/jsdom 保持一致）
 - 后端 API 服务。默认地址是 `http://localhost:8000/api/v1`，可通过 `VITE_API_BASE_URL` 覆盖。
 - Insight 页面需要浏览器能访问这些公开数据源：
   - `https://selfoss.open-digger.cn/open_leaderboard/`
@@ -51,6 +51,7 @@ npm i
 
 ```bash
 VITE_API_BASE_URL=http://localhost:8000/api/v1
+VITE_ATOMGIT_API_BASE_URL=http://127.0.0.1:8000/api/v1
 ```
 
 启动开发服务器：
@@ -80,6 +81,7 @@ npm run typecheck
 ## 本地开发说明
 
 - API 基址由 `src/lib/api.ts` 读取 `VITE_API_BASE_URL`，未设置时回退到 `http://localhost:8000/api/v1`。
+- 本地 GitHub 登录与普通 API 应使用 `localhost`；AtomGit 如要求 IP 形式的 OAuth 回调，可单独通过 `VITE_ATOMGIT_API_BASE_URL=http://127.0.0.1:8000/api/v1` 配置。
 - 开发服务器会把 `/media` 请求代理到 `http://localhost:8000`，用于本地显示后端媒体资源，例如头像和商品图片。
 - 登录页会调用 `/common/region` 判断是否为中国大陆访问者。大陆访问者会看到 AtomGit 登录入口，登录后也会看到提现账号和收货地址相关入口。
 - 在 localhost 开发时，可用 `?is_mainland_cn=1` 强制视为大陆访问者；用 `?is_mainland_cn=0` 清除该覆盖。覆盖值只保存在当前标签页的 `sessionStorage`。

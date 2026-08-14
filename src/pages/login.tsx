@@ -6,6 +6,7 @@ import { Github, Loader2 } from 'lucide-react';
 import { readRedirectFromParams, stashSocialRedirect } from '@/lib/redirect';
 import { storeIsMainlandCn, hasLocalhostOverride } from '@/lib/geo';
 import api from '@/lib/api';
+import { getSocialApiBaseUrl } from '@/lib/social-api';
 import { Button } from '@/app/components/ui/button';
 import { AgreementCheckbox } from '@/components/agreement-checkbox';
 
@@ -95,7 +96,7 @@ export default function LoginPage() {
     if (socialLoading) return;
     // 立即标记加载状态,展示全屏遮罩,阻止重复点击
     setSocialLoading(provider);
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+    const baseUrl = getSocialApiBaseUrl(provider);
     const redirectUri = `${window.location.origin}/social-callback`;
     // 社交登录会经历 OAuth 整页跳转,以及后端重定向。
     // 自定义查询参数无法随路保留,这里先把 redirect 目标存入 sessionStorage,

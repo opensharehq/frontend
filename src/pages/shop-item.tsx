@@ -397,7 +397,7 @@ export default function ShopItemPage() {
                   >
                     {paymentOptions.map((opt) => {
                       const key = paymentKey(opt);
-                      let label = '';
+                      let label: string;
                       if (opt.type === 'gift' && opt.tag_slug) {
                         label = t('shop.paymentGiftTagged', { tag: opt.tag_name ?? opt.tag_slug });
                       } else if (opt.type === 'gift' && !opt.tag_slug) {

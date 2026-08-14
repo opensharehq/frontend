@@ -9,8 +9,11 @@ This is a Vite React/TypeScript frontend for `open-share-frontend`. The app entr
 - `npm i`: install dependencies from `package-lock.json`.
 - `npm run dev`: start the local Vite development server.
 - `npm run build`: create a production build with Vite.
+- `npm run lint`: run ESLint with warnings treated as errors.
+- `npm run test`: run the Vitest suite once.
+- `npm run typecheck`: type-check the browser and Vite configuration projects.
 
-There is currently no configured `test`, `lint`, or `format` script. Do not document or rely on one until it is added to `package.json`.
+Use Node.js 20.19+, 22.13+, or 24+. There is currently no configured `format` script.
 
 ## Coding Style & Naming Conventions
 
@@ -18,7 +21,7 @@ Use TypeScript with React function components and keep `strict` compiler setting
 
 ## Testing Guidelines
 
-No test framework is configured yet. For now, verify changes with `npm run build` and focused manual checks in the Vite app. When adding tests, place them near the related module using a clear `*.test.ts` or `*.test.tsx` pattern and add the matching npm script in the same change.
+Vitest and Testing Library are configured with jsdom. Place tests near the related module using a clear `*.test.ts` or `*.test.tsx` pattern. Verify changes with the focused tests plus `npm run lint`, `npm run typecheck`, and `npm run build`; UI changes also need a focused manual check in the Vite app.
 
 ## Commit & Pull Request Guidelines
 

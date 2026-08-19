@@ -1,12 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState, type ComponentType } from "react";
 import { Header } from "@/app/components/header";
 import { HeroSection } from "@/app/components/hero-section";
-
-const PlatformsSection = lazy(() =>
-  import("@/app/components/platforms-section").then((module) => ({
-    default: module.PlatformsSection,
-  })),
-);
+import { ValueFlowSection } from "@/app/components/value-flow-section";
 const ProductsSection = lazy(() =>
   import("@/app/components/products-section").then((module) => ({
     default: module.ProductsSection,
@@ -83,8 +78,7 @@ export default function App() {
         <div className="homepage-network-field" aria-hidden="true" />
         <div className="relative z-10">
           <HeroSection />
-          <SectionDivider />
-          <DeferredSection component={PlatformsSection} />
+          <ValueFlowSection />
           <SectionDivider />
           <DeferredSection component={ProductsSection} />
           <SectionDivider />

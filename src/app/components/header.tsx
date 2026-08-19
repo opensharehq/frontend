@@ -36,8 +36,8 @@ export function Header() {
   }, [mobileMenuOpen]);
 
   return (
-    <header className="fixed left-0 right-0 top-0 z-50 border-b border-border bg-card/95 pt-[env(safe-area-inset-top)]">
-      <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
+    <header className="fixed left-0 right-0 top-0 z-50 border-b border-border/75 bg-background/92 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
+      <div className="mx-auto max-w-[1624px] px-4 py-2.5 sm:px-6">
         <div className="flex items-center justify-between">
           <Link
             to="/"
@@ -50,6 +50,18 @@ export function Header() {
               draggable={false}
             />
           </Link>
+
+          <nav className="ml-10 mr-auto hidden items-center gap-1 md:flex" aria-label={t("header.menu")}>
+            {mobileNavItems.map(({ label, to }) => (
+              <Link
+                key={to}
+                to={to}
+                className="rounded-md px-4 py-2 text-sm text-muted-foreground outline-none transition-colors hover:bg-secondary/45 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
 
           <div className="flex items-center gap-2">
             {isAuthenticated ? (

@@ -11,7 +11,11 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { HOMEPAGE_WAFER_PROJECTS } from "@/app/homepage-config";
-import { fetchHomepageProject, type HomepageProjectData } from "@/app/homepage-data";
+import {
+  fetchHomepageProject,
+  stripOpenDiggerLabelPrefix,
+  type HomepageProjectData,
+} from "@/app/homepage-data";
 import { useLanguage } from "@/app/contexts/language-context";
 import { getLabelDetailPath } from "@/pages/insight/domain/routes";
 
@@ -99,7 +103,8 @@ function ProjectAvatar({ project }: { project: HomepageProjectData }) {
 
 export function ContributionWafer() {
   const { t, language } = useLanguage();
-  const locale = language === "zh" ? "zh-CN" : "en-US";
+  const isChinese = language.startsWith("zh");
+  const locale = isChinese ? "zh-CN" : "en-US";
   const initialProjects = useMemo<HomepageProjectData[]>(
     () =>
       HOMEPAGE_WAFER_PROJECTS.map((project) => ({
@@ -168,8 +173,8 @@ export function ContributionWafer() {
 
         <div className="homepage-wafer-projects">
           {projects.map((project) => {
-            const displayName = language === "zh" && project.nameZh ? project.nameZh : project.name;
-            const labelPath = project.labelId.replace(/^:/, "").replace(/_/g, "/");
+            const displayName = isChinese && project.nameZh ? project.nameZh : project.name;
+            const labelPath = stripOpenDiggerLabelPrefix(project.labelId);
             return (
               <Link
                 key={project.labelId}

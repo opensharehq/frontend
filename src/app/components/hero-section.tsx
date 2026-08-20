@@ -82,7 +82,7 @@ export function HeroSection() {
             <dl className="homepage-hero-stats">
               <div>
                 <dt>{t("hero.stats.platforms")}</dt>
-                <dd>5</dd>
+                <dd>{HOMEPAGE_PLATFORMS.length}</dd>
               </div>
               <div>
                 <dt>{t("hero.stats.developers")}</dt>

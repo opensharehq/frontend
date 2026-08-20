@@ -1,7 +1,13 @@
 import { TREND_DATA_BASE } from "@/pages/insight/api/constants";
 import type { HomepageProjectConfig } from "@/app/homepage-config";
 
-type MetricJson = Record<string, number | { value?: number; openrank?: number } | null | undefined>;
+type MetricNumber = number | string;
+type MetricJson = Record<
+  string,
+  MetricNumber | { value?: MetricNumber; openrank?: MetricNumber } | null | undefined
+>;
+
+const METRIC_KEY_COLLATOR = new Intl.Collator("en", { numeric: true });
 
 interface LabelMetaJson {
   name?: string;
@@ -23,15 +29,23 @@ export function stripOpenDiggerLabelPrefix(labelId: string): string {
   return labelId.replace(/^[:#]/, "").replace(/^\/+/, "");
 }
 
+function toFiniteNumber(value: unknown): number | null {
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (typeof value !== "string" || value.trim() === "") return null;
+  const parsedValue = Number(value);
+  return Number.isFinite(parsedValue) ? parsedValue : null;
+}
+
 export function getLatestMetricValue(data: MetricJson | null | undefined): number | null {
   if (!data || typeof data !== "object") return null;
-  const entries = Object.entries(data);
-  for (let index = entries.length - 1; index >= 0; index -= 1) {
-    const rawValue = entries[index]?.[1];
-    if (typeof rawValue === "number" && Number.isFinite(rawValue)) return rawValue;
+  const sortedKeys = Object.keys(data).sort(METRIC_KEY_COLLATOR.compare).reverse();
+  for (const key of sortedKeys) {
+    const rawValue = data[key];
+    const directValue = toFiniteNumber(rawValue);
+    if (directValue != null) return directValue;
     if (rawValue && typeof rawValue === "object") {
-      const nestedValue = rawValue.value ?? rawValue.openrank;
-      if (typeof nestedValue === "number" && Number.isFinite(nestedValue)) return nestedValue;
+      const nestedValue = toFiniteNumber(rawValue.value) ?? toFiniteNumber(rawValue.openrank);
+      if (nestedValue != null) return nestedValue;
     }
   }
   return null;

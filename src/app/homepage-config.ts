@@ -8,6 +8,12 @@ export interface HomepageProjectConfig {
   position: { x: number; y: number };
 }
 
+export interface HomepagePopularSearchConfig {
+  /** Canonical OpenDigger label id. Keep the leading ':' for easy replacement. */
+  labelId: `:${string}`;
+  fallbackName: string;
+}
+
 export interface HomepagePlatformConfig {
   name: string;
   logo: string;
@@ -19,30 +25,29 @@ export interface HomepagePlatformConfig {
  * Projects rendered on the homepage wafer.
  *
  * OpenDigger data path convention:
- *   :projects/ollama -> https://oss.open-digger.cn/projects/ollama/*
+ *   :companies/huawei/cann -> https://oss.open-digger.cn/companies/huawei/cann/*
  *
  * Change labelId/fallbackName or reorder entries to update the wafer without
  * touching the rendering component.
  */
 export const HOMEPAGE_WAFER_PROJECTS: HomepageProjectConfig[] = [
-  { labelId: ":projects/ollama", fallbackName: "Ollama", accent: "teal", position: { x: 25, y: 23 } },
-  { labelId: ":projects/vllm", fallbackName: "vLLM", accent: "blue", position: { x: 49, y: 15 } },
-  { labelId: ":projects/svelte", fallbackName: "Svelte", accent: "amber", position: { x: 72, y: 24 } },
-  { labelId: ":projects/systemd", fallbackName: "systemd", accent: "blue", position: { x: 17, y: 48 } },
-  { labelId: ":projects/comfyui", fallbackName: "ComfyUI", accent: "teal", position: { x: 43, y: 43 } },
-  { labelId: ":projects/ray", fallbackName: "Ray", accent: "amber", position: { x: 69, y: 48 } },
-  { labelId: ":projects/bioconda", fallbackName: "Bioconda", accent: "teal", position: { x: 28, y: 70 } },
-  { labelId: ":projects/the_algorithms", fallbackName: "The Algorithms", accent: "blue", position: { x: 54, y: 72 } },
-  { labelId: ":projects/zigbee2mqtt", fallbackName: "Zigbee2MQTT", accent: "amber", position: { x: 78, y: 68 } },
+  { labelId: ":companies/huawei/cann", fallbackName: "CANN", accent: "teal", position: { x: 25, y: 23 } },
+  { labelId: ":projects/openclaw", fallbackName: "OpenClaw", accent: "blue", position: { x: 49, y: 15 } },
+  { labelId: ":universities/illinois/llvm", fallbackName: "LLVM", accent: "amber", position: { x: 72, y: 24 } },
+  { labelId: ":companies/meta/pytorch", fallbackName: "PyTorch", accent: "blue", position: { x: 17, y: 48 } },
+  { labelId: ":companies/mozilla/rust", fallbackName: "Rust", accent: "teal", position: { x: 43, y: 43 } },
+  { labelId: ":companies/microsoft/vscode", fallbackName: "VS Code", accent: "amber", position: { x: 69, y: 48 } },
+  { labelId: ":companies/odoo/odoo", fallbackName: "Odoo", accent: "teal", position: { x: 28, y: 70 } },
+  { labelId: ":companies/yandex/clickhouse", fallbackName: "ClickHouse", accent: "blue", position: { x: 54, y: 72 } },
 ];
 
 /** Search shortcuts shown below the landing-page search input. */
-export const HOMEPAGE_POPULAR_LABEL_IDS: HomepageProjectConfig["labelId"][] = [
-  ":projects/ollama",
-  ":projects/vllm",
-  ":projects/comfyui",
-  ":projects/ray",
-  ":projects/svelte",
+export const HOMEPAGE_POPULAR_SEARCHES: HomepagePopularSearchConfig[] = [
+  { labelId: ":technology/agentic_ai", fallbackName: "Agentic AI" },
+  { labelId: ":projects/openclaw", fallbackName: "OpenClaw" },
+  { labelId: ":companies/microsoft", fallbackName: "Microsoft" },
+  { labelId: ":companies/odoo/odoo", fallbackName: "Odoo" },
+  { labelId: ":companies/yandex/clickhouse", fallbackName: "ClickHouse" },
 ];
 
 /** Keep this list aligned with the five data sources on the existing homepage. */

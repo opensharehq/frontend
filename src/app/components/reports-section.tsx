@@ -4,12 +4,18 @@ import {
   BookOpen,
   Building2,
   Download,
+  ExternalLink,
   FileText,
   Globe,
   Landmark,
   TrendingUp,
 } from "lucide-react";
 import { useLanguage } from "@/app/contexts/language-context";
+
+const GLOBAL_OPEN_SOURCE_REPORT_URL =
+  "https://open-digger.cn/en/blog/2026-07-23-global-open-source-development-report";
+const CHINA_OPEN_SOURCE_REPORT_URL =
+  "https://kaiyuanshe.github.io/2025-China-Open-Source-Report/";
 
 export function ReportsSection() {
   const { t } = useLanguage();
@@ -26,6 +32,7 @@ export function ReportsSection() {
       ],
       badge: t("reports.global.badge"),
       tone: "text-chart-2",
+      href: GLOBAL_OPEN_SOURCE_REPORT_URL,
     },
     {
       icon: Award,
@@ -39,6 +46,7 @@ export function ReportsSection() {
       ],
       badge: t("reports.china.badge"),
       tone: "text-primary",
+      href: CHINA_OPEN_SOURCE_REPORT_URL,
     },
     {
       icon: TrendingUp,
@@ -52,6 +60,7 @@ export function ReportsSection() {
       ],
       badge: t("reports.talent.badge"),
       tone: "text-chart-4",
+      href: undefined,
     },
   ];
   const [featuredReport, ...supportingReports] = reports;
@@ -90,13 +99,23 @@ export function ReportsSection() {
           </div>
 
           <div className="grid gap-5 lg:grid-cols-5">
-            <article className="rounded-lg border border-border bg-background/80 p-6 lg:col-span-3">
+            <a
+              href={featuredReport.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group block rounded-lg border border-border bg-background/80 p-6 outline-none transition-colors hover:border-chart-2/55 focus-visible:ring-2 focus-visible:ring-ring lg:col-span-3"
+            >
               <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
                 <span className="inline-flex h-7 items-center rounded-full border border-primary/25 bg-primary/10 px-3 text-xs font-medium text-primary">
                   {featuredReport.badge}
                 </span>
-                <span className="font-mono text-sm text-muted-foreground tabular-nums">
+                <span className="inline-flex items-center gap-2 font-mono text-sm text-muted-foreground tabular-nums">
                   {featuredReport.year}
+                  <ExternalLink
+                    className="size-4 transition-colors group-hover:text-chart-2"
+                    strokeWidth={1.5}
+                    aria-hidden="true"
+                  />
                 </span>
               </div>
 
@@ -125,14 +144,13 @@ export function ReportsSection() {
                   </li>
                 ))}
               </ul>
-            </article>
+            </a>
 
             <div className="space-y-3 lg:col-span-2">
               {supportingReports.map((report) => {
                 const Icon = report.icon;
-
-                return (
-                  <article key={report.title} className="rounded-lg border border-border bg-background/65 p-4">
+                const reportContent = (
+                  <>
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border bg-card/70">
@@ -140,8 +158,15 @@ export function ReportsSection() {
                         </div>
                         <span className="text-xs font-medium text-primary">{report.badge}</span>
                       </div>
-                      <span className="font-mono text-xs text-muted-foreground tabular-nums">
+                      <span className="inline-flex items-center gap-2 font-mono text-xs text-muted-foreground tabular-nums">
                         {report.year}
+                        {report.href && (
+                          <ExternalLink
+                            className="size-3.5 transition-colors group-hover:text-primary"
+                            strokeWidth={1.5}
+                            aria-hidden="true"
+                          />
+                        )}
                       </span>
                     </div>
                     <h3 className="text-lg font-semibold leading-6 text-foreground">
@@ -158,6 +183,26 @@ export function ReportsSection() {
                         </li>
                       ))}
                     </ul>
+                  </>
+                );
+
+                if (report.href) {
+                  return (
+                    <a
+                      key={report.title}
+                      href={report.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group block rounded-lg border border-border bg-background/65 p-4 outline-none transition-colors hover:border-primary/55 focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {reportContent}
+                    </a>
+                  );
+                }
+
+                return (
+                  <article key={report.title} className="rounded-lg border border-border bg-background/65 p-4">
+                    {reportContent}
                   </article>
                 );
               })}

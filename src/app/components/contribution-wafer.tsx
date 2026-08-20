@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
+  Award,
   BarChart3,
   CircleDot,
   Radar,
   Star,
   UserRound,
   Users,
-  Wallet,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { HOMEPAGE_WAFER_PROJECTS } from "@/app/homepage-config";
@@ -15,32 +15,54 @@ import { fetchHomepageProject, type HomepageProjectData } from "@/app/homepage-d
 import { useLanguage } from "@/app/contexts/language-context";
 import { getLabelDetailPath } from "@/pages/insight/domain/routes";
 
-const WAFER_COLUMNS = 20;
-const WAFER_CELL_COUNT = WAFER_COLUMNS * 12;
+const WAFER_COLUMNS = 44;
+const WAFER_ROWS = 26;
+const WAFER_CELL_COUNT = WAFER_COLUMNS * WAFER_ROWS;
+
+function isInsideCluster(
+  x: number,
+  y: number,
+  centerX: number,
+  centerY: number,
+  radiusX: number,
+  radiusY: number,
+): boolean {
+  return ((x - centerX) / radiusX) ** 2 + ((y - centerY) / radiusY) ** 2 <= 1;
+}
 
 function getWaferCellTone(index: number): string {
   const column = index % WAFER_COLUMNS;
   const row = Math.floor(index / WAFER_COLUMNS);
-  const seed = (column * 17 + row * 23) % 29;
+  const x = column / (WAFER_COLUMNS - 1);
+  const y = row / (WAFER_ROWS - 1);
+  const seed = (column * 47 + row * 71 + column * row * 11 + (column ^ row) * 13) % 101;
 
   const isTealCluster =
-    ((column >= 9 && column <= 13 && row >= 3 && row <= 8) ||
-      (column >= 15 && column <= 17 && row >= 6 && row <= 9)) &&
-    seed % 4 !== 0;
+    (isInsideCluster(x, y, 0.57, 0.49, 0.15, 0.29) ||
+      isInsideCluster(x, y, 0.76, 0.61, 0.13, 0.22) ||
+      isInsideCluster(x, y, 0.87, 0.72, 0.07, 0.11)) &&
+    seed >= 27;
   const isBlueCluster =
-    ((column >= 3 && column <= 7 && row >= 2 && row <= 5) ||
-      (column >= 11 && column <= 16 && row <= 3) ||
-      (column >= 6 && column <= 10 && row >= 8)) &&
-    seed % 3 !== 0;
+    (isInsideCluster(x, y, 0.27, 0.29, 0.14, 0.2) ||
+      isInsideCluster(x, y, 0.61, 0.2, 0.19, 0.11) ||
+      isInsideCluster(x, y, 0.43, 0.81, 0.15, 0.16) ||
+      isInsideCluster(x, y, 0.75, 0.45, 0.08, 0.17)) &&
+    seed >= 34;
   const isAmberCluster =
-    ((column >= 2 && column <= 5 && row >= 6 && row <= 9) ||
-      (column >= 14 && column <= 18 && row >= 2 && row <= 5)) &&
-    seed % 3 !== 1;
+    (isInsideCluster(x, y, 0.25, 0.68, 0.14, 0.17) ||
+      isInsideCluster(x, y, 0.78, 0.28, 0.13, 0.15) ||
+      isInsideCluster(x, y, 0.68, 0.74, 0.08, 0.12)) &&
+    seed >= 41;
 
-  if (isTealCluster) return seed % 5 === 0 ? "teal-bright" : "teal";
-  if (isBlueCluster) return seed % 7 === 0 ? "blue-bright" : "blue";
-  if (isAmberCluster) return seed % 5 === 0 ? "amber-bright" : "amber";
-  return seed === 7 || seed === 19 ? "blue" : "idle";
+  const variant = seed % 13 <= 1 ? "bright" : seed % 7 <= 1 ? "soft" : "mid";
+
+  if (isTealCluster) return `teal-${variant}`;
+  if (isBlueCluster) return `blue-${variant}`;
+  if (isAmberCluster) return `amber-${variant}`;
+  if (seed === 7 || seed === 19 || seed === 83) return "blue-soft";
+  if (seed % 17 === 0) return "idle-lit";
+  if (seed % 11 === 0) return "idle-deep";
+  return "idle";
 }
 
 function formatMetric(value: number | null, locale: string): string {
@@ -55,22 +77,23 @@ function ProjectAvatar({ project }: { project: HomepageProjectData }) {
   const [failed, setFailed] = useState(false);
   if (!project.avatar || failed) {
     return (
-      <span className="flex size-5 items-center justify-center rounded bg-background/70 font-mono text-[9px] font-bold text-foreground">
+      <span className="homepage-wafer-project__avatar homepage-wafer-project__avatar--fallback" aria-hidden="true">
         {project.name.slice(0, 2).toUpperCase()}
       </span>
     );
   }
   return (
-    <img
-      src={project.avatar}
-      alt=""
-      className="size-5 rounded bg-background/70 object-contain"
-      width={20}
-      height={20}
-      loading="lazy"
-      decoding="async"
-      onError={() => setFailed(true)}
-    />
+    <span className="homepage-wafer-project__avatar" aria-hidden="true">
+      <img
+        src={project.avatar}
+        alt=""
+        width={20}
+        height={20}
+        loading="lazy"
+        decoding="async"
+        onError={() => setFailed(true)}
+      />
+    </span>
   );
 }
 
@@ -109,6 +132,10 @@ export function ContributionWafer() {
   return (
     <div className="homepage-wafer-shell" aria-label={t("hero.wafer.ariaLabel")}>
       <div className="homepage-wafer-frame">
+        <div className="homepage-wafer-base" aria-hidden="true">
+          <span />
+        </div>
+
         <div className="homepage-wafer" role="img" aria-label={t("hero.wafer.description")}>
           <div className="homepage-wafer-grid" aria-hidden="true">
             {Array.from({ length: WAFER_CELL_COUNT }, (_, index) => (
@@ -137,10 +164,12 @@ export function ContributionWafer() {
             })}
             <circle cx="565" cy="330" r="13" className="route-core" />
           </svg>
+        </div>
 
+        <div className="homepage-wafer-projects">
           {projects.map((project) => {
             const displayName = language === "zh" && project.nameZh ? project.nameZh : project.name;
-            const labelPath = project.labelId.replace(/^:projects\//, "").replace(/_/g, "/");
+            const labelPath = project.labelId.replace(/^:/, "").replace(/_/g, "/");
             return (
               <Link
                 key={project.labelId}
@@ -214,7 +243,7 @@ export function ContributionWafer() {
         </Link>
         <Link to="/points" className="homepage-wafer-product homepage-wafer-product--blue">
           <span className="homepage-wafer-product__icon">
-            <Wallet className="size-5" strokeWidth={1.5} aria-hidden="true" />
+            <Award className="size-5" strokeWidth={1.5} aria-hidden="true" />
           </span>
           <span className="homepage-wafer-product__copy">
             <strong>{t("products.credit.name")}</strong>

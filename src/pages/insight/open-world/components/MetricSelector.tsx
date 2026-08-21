@@ -26,7 +26,7 @@ export function MetricSelector({ value, onChange }: MetricSelectorProps) {
 
   return (
     <Select value={value} onValueChange={(v) => onChange(v as DatasetKey)}>
-      <SelectTrigger className="w-full text-foreground">
+      <SelectTrigger className="openworld-metric-trigger w-full text-foreground">
         <SelectValue placeholder={getLabel(value)} />
       </SelectTrigger>
       <SelectContent>

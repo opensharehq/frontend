@@ -43,10 +43,10 @@ interface ThemeColors {
   cardForeground: string
   border: string
   secondary: string
-  accent: string
   foreground: string
   mutedForeground: string
   chart1: string
+  heatRamp: string[]
 }
 
 function readThemeColors(): ThemeColors {
@@ -55,10 +55,12 @@ function readThemeColors(): ThemeColors {
     cardForeground: readThemeColor('--card-foreground', '#E2E8F0'),
     border: readThemeColor('--border', '#475569'),
     secondary: readThemeColor('--secondary', '#334155'),
-    accent: readThemeColor('--accent', '#334155'),
     foreground: readThemeColor('--foreground', '#E2E8F0'),
     mutedForeground: readThemeColor('--muted-foreground', '#64748B'),
     chart1: readThemeColor('--chart-1', '#22C55E'),
+    heatRamp: document.documentElement.classList.contains('light')
+      ? ['#E5F4E9', '#B8E1C5', '#76C893', '#35A86B', '#16734A']
+      : ['#183237', '#17534B', '#14745C', '#18A46E', '#4ADE80'],
   }
 }
 
@@ -80,8 +82,6 @@ function toLogScale(raw: number): number {
  * 下界从浅绿起步（避免过白与背景难以区分），上界采用更深的草绿提升头部对比；
  * 与无数据区域的主题灰色 areaColor 产生明显区分。
  */
-const HEAT_COLOR_RAMP = ['#DEEED4', '#B8DCA1', '#86C06C', '#5B9C4B', '#3E7A33'] as const
-
 interface MapItem {
   /** 必须严格匹配 GeoJSON 内部 name，否则热力不着色 */
   name: string
@@ -281,10 +281,10 @@ export function OverviewMap({
         visualMap: {
           min: logMin,
           max: logMax > logMin ? logMax : logMin + 1,
-          left: 'left' as const,
-          bottom: 60,
-          itemHeight: 140,
-          itemWidth: 18,
+          left: 14,
+          bottom: 48,
+          itemHeight: 108,
+          itemWidth: 10,
           calculable: true,
           show: true,
           textStyle: { color: theme.mutedForeground },
@@ -296,7 +296,7 @@ export function OverviewMap({
           // 无数据区域沿用 itemStyle.areaColor=theme.card（主题灰），
           // 与最低段的极浅绿形成视觉区分，避免「有数据但显示成灰色」的误判。
           inRange: {
-            color: [...HEAT_COLOR_RAMP],
+            color: theme.heatRamp,
           },
         },
         series: [
@@ -306,13 +306,15 @@ export function OverviewMap({
             roam: true,
             data: mapItems,
             itemStyle: {
-              areaColor: theme.card,
+              areaColor: theme.secondary,
               borderColor: theme.border,
-              borderWidth: 0.5,
+              borderWidth: 0.65,
             },
             emphasis: {
               itemStyle: {
-                areaColor: theme.accent,
+                areaColor: theme.chart1,
+                shadowBlur: 14,
+                shadowColor: theme.chart1,
               },
               label: {
                 show: true,
@@ -456,7 +458,7 @@ export function OverviewMap({
         <button
           type="button"
           onClick={onBackToWorld}
-          className="absolute left-3 top-3 z-10 cursor-pointer rounded-md border border-border bg-card px-3 py-1.5 text-xs text-card-foreground shadow-sm transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          className="openworld-map-action absolute left-3 top-3 z-10"
           title={t('insight.overview.map.backToWorld')}
         >
           ← {t('insight.overview.map.backToWorld')}
@@ -471,7 +473,7 @@ export function OverviewMap({
         <button
           type="button"
           onClick={handleReset}
-          className="absolute bottom-3 left-3 z-10 cursor-pointer rounded-md border border-border bg-card px-3 py-1.5 text-xs text-card-foreground shadow-sm transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          className="openworld-map-action absolute bottom-3 left-3 z-10"
           title={t('insight.overview.map.resetZoom')}
         >
           ↻ {t('insight.overview.map.resetZoom')}

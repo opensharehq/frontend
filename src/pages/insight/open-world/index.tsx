@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { CircleSlash2, Globe2, MapPinned, MousePointer2, Radio } from 'lucide-react'
 
 import { fetchOverviewDataset, fetchOverviewMeta } from './api'
 import { InfoBar } from './components/InfoBar'
@@ -106,6 +107,7 @@ export default function OverviewPage() {
   }, [geoScope, isZh])
 
   const pageTitle = t('insight.overview.map.titlePattern', { metric: metricLabel, region: regionLabel })
+  const drillDownAvailable = dataset !== 'influence'
 
   // 地图数据源：固定取第一个含 code 的国家榜（企业榜无 code 不参与地图）
   const mapRows: LeaderboardRow[] = useMemo(() => {
@@ -139,73 +141,114 @@ export default function OverviewPage() {
   }, [meta])
 
   return (
-    <div className="flex h-full flex-col overflow-hidden px-2 pt-0 pb-0.5 md:px-3 md:pt-0 md:pb-1">
-      {/* 标题 Banner */}
-      <div className="overview-banner shrink-0 px-4 pt-1 pb-2 text-center md:px-6 md:pt-1.5 md:pb-3">
-        <h1 className="overview-banner-title text-xl font-bold tracking-tight md:text-2xl">
-          {pageTitle}
-        </h1>
+    <section className="openworld-page flex h-full min-h-0 flex-col gap-3 overflow-hidden">
+      <header className="openworld-hero shrink-0">
+        <div className="min-w-0">
+          <div className="openworld-eyebrow">
+            <Globe2 className="size-3.5" aria-hidden="true" />
+            <span>{t('insight.overview.hero.eyebrow')}</span>
+          </div>
+          <div className="mt-1 flex min-w-0 items-baseline gap-3">
+            <h1 className="openworld-title">{t('insight.overview.hero.title')}</h1>
+            <span className="openworld-scope-label">/ {regionLabel}</span>
+          </div>
+          <p className="mt-1 truncate text-xs text-muted-foreground md:text-sm">
+            {t('insight.overview.hero.description')}
+          </p>
+        </div>
+
+        <div className="flex shrink-0 items-end gap-3">
+          <div className="openworld-live-status hidden xl:flex">
+            <Radio className="size-3.5" aria-hidden="true" />
+            <span>{t('insight.overview.hero.live')}</span>
+          </div>
+          <div className="w-72">
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              {t('insight.overview.hero.metricLabel')}
+            </p>
+            <MetricSelector value={dataset} onChange={setDataset} />
+          </div>
+        </div>
+      </header>
+
+      <div className="shrink-0">
+        <InfoBar summary={summary} />
       </div>
-      <div className="shrink-0 h-3 md:h-4" aria-hidden="true" />
 
       {/* 主内容区域 */}
-      <div className="flex min-h-0 flex-1 flex-col gap-3 md:flex-row">
-        {/* 左侧：顶部选择器 + 地图 + 底部三趋势图 (70%)；减去一半 gap-3 避免与 InfoBar 右沿错位 */}
-        <div className="flex min-h-0 flex-1 flex-col gap-2 md:w-[calc(70%-6px)] md:flex-none">
-          {/* 顶部：dataset 选择器 */}
-          <div className="flex shrink-0 items-center gap-3">
-            <div className="w-80">
-              <MetricSelector value={dataset} onChange={setDataset} />
+      <div className="openworld-dashboard-grid min-h-0 flex-1">
+        <div className="flex min-h-0 min-w-0 flex-col gap-3">
+          <div className="openworld-map-shell flex min-h-0 flex-1 flex-col">
+            <div className="openworld-map-header">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span className="openworld-section-icon">
+                  <MapPinned className="size-4" aria-hidden="true" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
+                    {t('insight.overview.map.coverage')}
+                  </p>
+                  <h2 className="truncate text-sm font-semibold text-foreground" title={pageTitle}>
+                    {pageTitle}
+                  </h2>
+                </div>
+              </div>
+              <div className="hidden items-center gap-1.5 text-[11px] text-muted-foreground lg:flex">
+                {drillDownAvailable ? (
+                  <MousePointer2 className="size-3.5 text-primary" aria-hidden="true" />
+                ) : (
+                  <CircleSlash2 className="size-3.5" aria-hidden="true" />
+                )}
+                <span>
+                  {t(drillDownAvailable
+                    ? 'insight.overview.map.exploreHint'
+                    : 'insight.overview.map.noDrillDownHint')}
+                </span>
+              </div>
+            </div>
+
+            <div className="openworld-map-stage min-h-0 flex-1 overflow-hidden">
+              <OverviewMap
+                rows={mapRows}
+                geoScope={geoScope}
+                metricLabel={metricLabel}
+                regionLabel={regionLabel}
+                isZh={isZh}
+                loading={loading}
+                onDrillDown={handleDrillDown}
+                onBackToWorld={handleBackToWorld}
+              />
             </div>
           </div>
 
-          {/* 地图：占据主要高度；overflow-hidden 避免 ECharts canvas 隐式高度把趋势图挤出左列底沿 */}
-          <div className="min-h-0 flex-1 overflow-hidden">
-            <OverviewMap
-              rows={mapRows}
-              geoScope={geoScope}
-              metricLabel={metricLabel}
-              regionLabel={regionLabel}
-              isZh={isZh}
-              loading={loading}
-              onDrillDown={handleDrillDown}
-              onBackToWorld={handleBackToWorld}
-            />
-          </div>
-
-          {/* 底部：三个趋势图横排，紧凑模式隐藏垂直刻度 */}
-          {/* 使用 flex + overflow-hidden 限定子卡片严格=120px，避免 grid auto-rows 被 min-content 撑高造成倒灌 InfoBar */}
-          <div className="flex h-[120px] shrink-0 gap-3 overflow-hidden">
+          <div className="openworld-trend-grid h-[136px] shrink-0 overflow-hidden">
             {[0, 1, 2].map((idx) => (
-              <div key={idx} className="min-h-0 min-w-0 flex-1 overflow-hidden">
+              <div key={idx} className="min-h-0 min-w-0 overflow-hidden">
                 <TrendChart
                   trend={trends[idx] ?? null}
                   loading={loading}
                   isZh={isZh}
                   compact
+                  accentIndex={idx}
                 />
               </div>
             ))}
           </div>
         </div>
 
-        {/* 右侧：贯穿上下的完整排行榜面板 (30%)；减去一半 gap-3 避免与 InfoBar 右沿错位 */}
-        <div className="flex min-h-0 flex-1 flex-col md:w-[calc(30%-6px)] md:flex-none">
-          <div className="min-h-0 flex-1">
-            <LeaderboardPanel
-              leaderboards={leaderboards}
-              isZh={isZh}
-              loading={loading}
-              onRowClick={handleRowClick}
-            />
-          </div>
-        </div>
+        <aside className="min-h-0 min-w-0">
+          <LeaderboardPanel
+            leaderboards={leaderboards}
+            isZh={isZh}
+            loading={loading}
+            onRowClick={handleRowClick}
+          />
+        </aside>
       </div>
 
-      {/* 底部信息栏：与上部主内容对齐，保留圆角 */}
-      <div className="shrink-0 pt-2">
-        <InfoBar summary={summary} />
+      <div className="sr-only" aria-live="polite">
+        {loading ? t('insight.overview.loading') : `${metricLabel} · ${regionLabel}`}
       </div>
-    </div>
+    </section>
   )
 }

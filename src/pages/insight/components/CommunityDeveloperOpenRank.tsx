@@ -12,6 +12,7 @@ import { PaginationControl } from './PaginationControl';
 import { DeltaDisplay } from './DeltaDisplay';
 import { getDeveloperProfileUrlByPlatform } from '../domain/repoPlatform';
 import { RepoPlatformIcon } from './RepoPlatformIcon';
+import { InsightDetailSectionHeader } from './InsightDetailVisuals';
 
 const PAGE_SIZE = 10;
 
@@ -24,6 +25,11 @@ type Props = {
   onDeveloperClick: (item: LeaderboardItem) => void;
   lang: Lang;
   t: (k: string) => string;
+  detailHeader?: {
+    eyebrow: string;
+    title: string;
+    description: string;
+  };
 };
 
 export function CommunityDeveloperOpenRank({
@@ -35,6 +41,7 @@ export function CommunityDeveloperOpenRank({
   onDeveloperClick,
   lang,
   t,
+  detailHeader,
 }: Props) {
   const [page, setPage] = useState(1);
 
@@ -77,39 +84,55 @@ export function CommunityDeveloperOpenRank({
     return rows.slice(start, start + PAGE_SIZE);
   }, [rows, page]);
 
-  return (
-    <div className="mb-6">
-      <div className="flex flex-wrap items-start sm:items-center justify-between gap-3 mb-3">
-        <h4 className="text-sm font-mono font-semibold text-card-foreground">{t('insight.detailCommunityDevelopersHeading')}</h4>
-        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end">
-          <div className="min-w-[9rem] w-40 flex-shrink-0 sm:min-w-[9.5rem] sm:w-44">
-            <TimeRangePicker
-              meta={meta}
-              timeType={timeType}
-              timeValue={sectionTimeValue}
-              lang={lang}
-              t={t}
-              hideOuterLabel
-              dense
-              boundsOverride={dataBounds}
-              onValueChange={onSectionTimeChange}
-              onCommit={() => {}}
-            />
-          </div>
-          {totalPages > 0 ? (
-            <div className="w-[8rem] flex-shrink-0 sm:w-36">
-              <PaginationControl
-                currentPage={page}
-                totalPages={totalPages}
-                onPageChange={setPage}
-                compact
-                dense
-                showWhenSinglePage
-              />
-            </div>
-          ) : null}
-        </div>
+  const controls = (
+    <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+      <div className="w-40 min-w-[9rem] flex-shrink-0 sm:w-44 sm:min-w-[9.5rem]">
+        <TimeRangePicker
+          meta={meta}
+          timeType={timeType}
+          timeValue={sectionTimeValue}
+          lang={lang}
+          t={t}
+          hideOuterLabel
+          dense
+          boundsOverride={dataBounds}
+          onValueChange={onSectionTimeChange}
+          onCommit={() => {}}
+        />
       </div>
+      {totalPages > 0 ? (
+        <div className="w-[8rem] flex-shrink-0 sm:w-36">
+          <PaginationControl
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            compact
+            dense
+            showWhenSinglePage
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+
+  return (
+    <div>
+      {detailHeader ? (
+        <InsightDetailSectionHeader
+          icon="ranking"
+          eyebrow={detailHeader.eyebrow}
+          title={detailHeader.title}
+          description={detailHeader.description}
+          controls={controls}
+        />
+      ) : (
+        <div className="mb-3 flex flex-wrap items-start justify-between gap-3 sm:items-center">
+          <h4 className="text-sm font-mono font-semibold text-card-foreground">
+            {t('insight.detailCommunityDevelopersHeading')}
+          </h4>
+          {controls}
+        </div>
+      )}
       <div className="overflow-x-auto rounded-lg border border-border bg-card">
         {rows.length === 0 ? (
           <p className="py-8 text-center text-sm font-mono text-muted-foreground">{t('insight.noData')}</p>

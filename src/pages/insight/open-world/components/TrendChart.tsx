@@ -1,7 +1,9 @@
 import type { EChartsOption } from 'echarts'
 import type { EChartsType } from 'echarts/core'
+import { TrendingDown, TrendingUp } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { formatCompactNumber } from '../format'
 import type { TrendItem } from '../types'
 import { echarts } from './trendChartEcharts'
 
@@ -11,6 +13,8 @@ interface TrendChartProps {
   isZh: boolean
   /** 紧凑模式：隐藏垂直刻度并最大化绘图区，适用于多图并排小窗口 */
   compact?: boolean
+  /** 并排图表的视觉色调序号 */
+  accentIndex?: number
 }
 
 function readThemeColor(name: string, fallback: string): string {
@@ -52,8 +56,17 @@ function formatAxisValue(value: number | string): string {
   return String(Math.round(num))
 }
 
-function buildOption(trend: TrendItem, seriesName: string, compact: boolean): EChartsOption {
-  const primary = readThemeColor('--chart-1', '#22C55E')
+const ACCENT_COLOR_KEYS = ['--chart-1', '--chart-2', '--chart-4'] as const
+const ACCENT_FALLBACKS = ['#22C55E', '#3B82F6', '#F59E0B'] as const
+
+function buildOption(
+  trend: TrendItem,
+  seriesName: string,
+  compact: boolean,
+  accentIndex: number,
+): EChartsOption {
+  const tone = Math.abs(accentIndex) % ACCENT_COLOR_KEYS.length
+  const primary = readThemeColor(ACCENT_COLOR_KEYS[tone], ACCENT_FALLBACKS[tone])
   const muted = readThemeColor('--muted-foreground', '#64748B')
   const border = readThemeColor('--border', '#475569')
   const card = readThemeColor('--card', '#1E293B')
@@ -95,7 +108,7 @@ function buildOption(trend: TrendItem, seriesName: string, compact: boolean): EC
       axisLine: { show: false },
       axisTick: { show: false },
       axisLabel: {
-        show: true,
+        show: !compact,
         color: muted,
         fontSize: compact ? 9 : 11,
         formatter: (value: number | string) => formatAxisValue(value),
@@ -144,13 +157,20 @@ function isValidTrend(trend: TrendItem | null): trend is TrendItem {
   )
 }
 
-export function TrendChart({ trend, loading, isZh, compact = false }: TrendChartProps) {
+export function TrendChart({
+  trend,
+  loading,
+  isZh,
+  compact = false,
+  accentIndex = 0,
+}: TrendChartProps) {
   const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<EChartsType | null>(null)
   const trendRef = useRef<TrendItem | null>(trend)
   const seriesNameRef = useRef<string>('')
   const compactRef = useRef<boolean>(compact)
+  const accentIndexRef = useRef<number>(accentIndex)
 
   const seriesName = isValidTrend(trend) ? (isZh ? trend.title_zh : trend.title) : ''
 
@@ -158,6 +178,7 @@ export function TrendChart({ trend, loading, isZh, compact = false }: TrendChart
   trendRef.current = trend
   seriesNameRef.current = seriesName
   compactRef.current = compact
+  accentIndexRef.current = accentIndex
 
   // 初始化 chart 实例 + resize + theme observer，仅依赖容器
   useEffect(() => {
@@ -180,7 +201,10 @@ export function TrendChart({ trend, loading, isZh, compact = false }: TrendChart
     const themeObserver = new MutationObserver(() => {
       const current = trendRef.current
       if (!isValidTrend(current)) return
-      instance.setOption(buildOption(current, seriesNameRef.current, compactRef.current), true)
+      instance.setOption(
+        buildOption(current, seriesNameRef.current, compactRef.current, accentIndexRef.current),
+        true,
+      )
     })
     themeObserver.observe(document.documentElement, {
       attributes: true,
@@ -204,18 +228,44 @@ export function TrendChart({ trend, loading, isZh, compact = false }: TrendChart
       instance.clear()
       return
     }
-    instance.setOption(buildOption(trend, seriesName, compact), true)
-  }, [trend, seriesName, compact])
+    instance.setOption(buildOption(trend, seriesName, compact, accentIndex), true)
+  }, [trend, seriesName, compact, accentIndex])
 
   const isEmpty = !loading && !isValidTrend(trend)
   const headingText = isValidTrend(trend) ? (isZh ? trend.title_zh : trend.title) : ''
+  const latestValue = isValidTrend(trend) ? trend.values[trend.values.length - 1] ?? 0 : 0
+  const previousValue = isValidTrend(trend)
+    ? trend.values[trend.values.length - 2] ?? latestValue
+    : 0
+  const percentChange = previousValue === 0
+    ? 0
+    : ((latestValue - previousValue) / Math.abs(previousValue)) * 100
+  const isGrowing = percentChange >= 0
+  const TrendIcon = isGrowing ? TrendingUp : TrendingDown
+  const tone = Math.abs(accentIndex) % ACCENT_COLOR_KEYS.length
 
   return (
-    <div className={`dark-card flex h-full flex-col rounded-lg ${compact ? 'p-2' : 'p-3'}`}>
-      <div className={`flex shrink-0 items-center justify-between ${compact ? 'mb-1' : 'mb-2'}`}>
-        <h3 className={`truncate font-medium text-foreground ${compact ? 'text-xs' : 'text-sm'}`} title={headingText}>
-          {headingText}
-        </h3>
+    <article
+      className={`openworld-trend-card flex h-full flex-col ${compact ? 'px-3 pb-2 pt-2.5' : 'p-3'}`}
+      data-tone={tone}
+    >
+      <div className={`flex shrink-0 items-start justify-between gap-2 ${compact ? 'mb-0.5' : 'mb-2'}`}>
+        <div className="min-w-0">
+          <h3 className={`truncate font-medium text-muted-foreground ${compact ? 'text-[11px]' : 'text-sm'}`} title={headingText}>
+            {headingText}
+          </h3>
+          {!loading && !isEmpty && (
+            <p className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
+              {formatCompactNumber(latestValue, isZh)}
+            </p>
+          )}
+        </div>
+        {!loading && !isEmpty && (
+          <span className={`openworld-trend-delta ${isGrowing ? 'text-emerald-500' : 'text-rose-500'}`}>
+            <TrendIcon className="size-3" aria-hidden="true" />
+            {Math.abs(percentChange).toFixed(1)}%
+          </span>
+        )}
       </div>
 
       <div className="relative min-h-0 flex-1">
@@ -233,6 +283,6 @@ export function TrendChart({ trend, loading, isZh, compact = false }: TrendChart
           </div>
         )}
       </div>
-    </div>
+    </article>
   )
 }

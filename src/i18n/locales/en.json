@@ -1124,6 +1124,14 @@
     "detailSectionRepoSingular": "Repository",
     "detailSectionRepoList": "Repositories",
     "detailBasicStatsHeading": "Basic Statistics",
+    "detailDataProfile": "Open Source Intelligence",
+    "detailLatestSnapshot": "Latest data period",
+    "detailTrendEyebrow": "Metric timeline",
+    "detailTrendSummary": "Four core metrics reveal the community's momentum over time.",
+    "detailTrendPeak": "Peak",
+    "detailTrendInteractionHint": "Move the pointer across the chart or use the left and right arrow keys to inspect data points. Click to pin a point; press Escape to clear it.",
+    "detailTalentEyebrow": "Developer intelligence",
+    "detailTalentSummary": "A multidimensional view of capability and contribution footprint.",
     "detailTrendModeAria": "Month / year toggle",
     "detailTrendModeMonth": "Month",
     "detailTrendModeYear": "Year",
@@ -1140,7 +1148,12 @@
     "detailChartParticipantsTrend": "Developer Count Trend",
     "detailChartIssuePrTrend": "Active Issue/PR Trend",
     "detailContributionMapHeading": "Contribution Distribution (Recent Year)",
+    "detailMapEyebrow": "Global landscape",
+    "detailMapSummary": "Explore the geographic distribution of developers and OpenRank contribution.",
+    "detailMapScope": "Global contribution heatmap",
     "detailCommunityDevelopersHeading": "Community developer contribution",
+    "detailCommunityEyebrow": "Live ranking",
+    "detailCommunitySummary": "Track the developers creating the most value for this community in the selected period.",
     "detailCommunityColRank": "Rank",
     "detailCommunityColPlatform": "Platform",
     "detailCommunityColChange": "Change",
@@ -1243,6 +1256,13 @@
       "error": "Failed to load data",
       "noData": "No data available",
       "loginToView": "Login to view details",
+      "hero": {
+        "eyebrow": "Global Open Source Pulse",
+        "title": "OpenWorld",
+        "description": "Explore developer density, contribution value, and project influence worldwide",
+        "live": "Continuously updated",
+        "metricLabel": "View by"
+      },
       "datasets": {
         "developers": "Developer Count",
         "contribution": "Developer OpenRank Contribution",
@@ -1251,9 +1271,16 @@
       "map": {
         "backToWorld": "Back to World Map",
         "resetZoom": "Reset Zoom",
-        "titlePattern": "{{region}} {{metric}} Heat Map"
+        "titlePattern": "{{region}} {{metric}} Heat Map",
+        "coverage": "Global Landscape",
+        "exploreHint": "Regional drill-down available for China and the United States",
+        "noDrillDownHint": "Drill-down is unavailable for project influence"
+      },
+      "leaderboard": {
+        "eyebrow": "Live ranking"
       },
       "infoBar": {
+        "summary": "Global open source data summary",
         "dataSource": "Data Source",
         "totalRecords": "Total Records",
         "totalRepos": "Total Repos",

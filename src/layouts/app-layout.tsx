@@ -219,7 +219,7 @@ export function AppLayout({ publicMode = false }: AppLayoutProps) {
     }`;
 
   const SidebarContent = ({ collapsed = false }: { collapsed?: boolean } = {}) => (
-    <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
+    <div className="relative z-[1] flex h-full flex-col bg-transparent text-sidebar-foreground">
       {/* Logo */}
       <div className={`border-b border-sidebar-border/70 px-3 ${collapsed ? 'py-3' : 'py-4'}`}>
         <Link
@@ -363,7 +363,7 @@ export function AppLayout({ publicMode = false }: AppLayoutProps) {
     <div className="flex h-dvh bg-background">
       {/* Desktop Sidebar */}
       <aside
-        className={`relative hidden overflow-visible lg:flex lg:flex-col lg:border-r lg:border-sidebar-border lg:bg-sidebar lg:shadow-sm lg:transition-[width] lg:duration-200 lg:ease-out motion-reduce:lg:transition-none ${
+        className={`app-sidebar-field relative hidden overflow-visible lg:flex lg:flex-col lg:border-r lg:border-sidebar-border lg:bg-sidebar lg:shadow-sm lg:transition-[width] lg:duration-200 lg:ease-out motion-reduce:lg:transition-none ${
           sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'
         }`}
         data-state={sidebarCollapsed ? 'collapsed' : 'expanded'}
@@ -398,7 +398,7 @@ export function AppLayout({ publicMode = false }: AppLayoutProps) {
             className="fixed inset-0 bg-foreground/70"
             onClick={() => setSidebarOpen(false)}
           />
-          <aside className="fixed inset-y-0 left-0 z-50 w-72 border-r border-sidebar-border bg-sidebar shadow-xl">
+          <aside className="app-sidebar-field fixed inset-y-0 left-0 z-50 w-72 border-r border-sidebar-border bg-sidebar shadow-xl">
             <SidebarContent />
           </aside>
         </div>
@@ -436,7 +436,7 @@ export function AppLayout({ publicMode = false }: AppLayoutProps) {
         </header>
 
         {/* Page Content */}
-        <main className="dark-scrollbar flex-1 overflow-y-auto p-4 lg:p-6">
+        <main className="app-network-main dark-scrollbar flex-1 overflow-y-auto p-4 lg:p-6">
           <Outlet />
         </main>
       </div>

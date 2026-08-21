@@ -1124,6 +1124,14 @@
     "detailSectionRepoSingular": "仓库",
     "detailSectionRepoList": "仓库列表",
     "detailBasicStatsHeading": "基本统计数据",
+    "detailDataProfile": "开源数据画像",
+    "detailLatestSnapshot": "最新数据时间",
+    "detailTrendEyebrow": "指标时间线",
+    "detailTrendSummary": "从四项核心指标观察社区的历史变化与发展势能。",
+    "detailTrendPeak": "峰值",
+    "detailTrendInteractionHint": "移动指针或使用左右方向键查看数据点。点击可锁定数据点，按 Escape 清除。",
+    "detailTalentEyebrow": "开发者洞察",
+    "detailTalentSummary": "从多个维度观察开发者能力与开源贡献版图。",
     "detailTrendModeAria": "月度/年度切换",
     "detailTrendModeMonth": "月度",
     "detailTrendModeYear": "年度",
@@ -1140,7 +1148,12 @@
     "detailChartParticipantsTrend": "开发者参与数量历史趋势",
     "detailChartIssuePrTrend": "活跃 Issue/PR 数量历史趋势",
     "detailContributionMapHeading": "贡献度分布（近一年）",
+    "detailMapEyebrow": "全球贡献版图",
+    "detailMapSummary": "查看开发者数量与 OpenRank 贡献度在全球的地域分布。",
+    "detailMapScope": "全球贡献热力",
     "detailCommunityDevelopersHeading": "社区开发者贡献度",
+    "detailCommunityEyebrow": "实时排行",
+    "detailCommunitySummary": "查看所选周期内为该社区创造主要价值的开发者及其排名变化。",
     "detailCommunityColRank": "排名",
     "detailCommunityColPlatform": "平台",
     "detailCommunityColChange": "变化",
@@ -1243,6 +1256,13 @@
       "error": "数据加载失败",
       "noData": "暂无数据",
       "loginToView": "登录后查看详情",
+      "hero": {
+        "eyebrow": "全球开源脉动",
+        "title": "OpenWorld",
+        "description": "从全球视角观察开发者密度、贡献价值与项目影响力",
+        "live": "数据持续更新",
+        "metricLabel": "观察维度"
+      },
       "datasets": {
         "developers": "开发者数量",
         "contribution": "开发者 OpenRank 贡献度",
@@ -1251,9 +1271,16 @@
       "map": {
         "backToWorld": "返回世界地图",
         "resetZoom": "重置缩放",
-        "titlePattern": "{{region}}{{metric}}热力地图"
+        "titlePattern": "{{region}}{{metric}}热力地图",
+        "coverage": "全球态势",
+        "exploreHint": "中国与美国支持区域下钻",
+        "noDrillDownHint": "项目影响力视角暂不支持下钻"
+      },
+      "leaderboard": {
+        "eyebrow": "实时排名"
       },
       "infoBar": {
+        "summary": "全球开源数据概览",
         "dataSource": "数据来源",
         "totalRecords": "日志总量",
         "totalRepos": "仓库总量",

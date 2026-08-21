@@ -1,4 +1,5 @@
 import type { SyntheticEvent } from 'react'
+import { Trophy } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getCountryFlagCode } from '../../domain/geography'
 import { formatCompactChange, formatCompactNumber } from '../format'
@@ -86,9 +87,22 @@ export function LeaderboardTable({ leaderboard, isZh, loading, onRowClick }: Lea
   }
 
   return (
-    <div className="dark-card flex h-full flex-col rounded-lg p-3">
-      <div className="mb-2 flex shrink-0 items-center justify-between">
-        <h3 className="text-sm font-medium text-foreground">{title}</h3>
+    <section className="openworld-leaderboard-card flex h-full flex-col overflow-hidden">
+      <div className="openworld-leaderboard-header">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="openworld-section-icon openworld-section-icon--amber">
+            <Trophy className="size-3.5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-amber-500">
+              {t('insight.overview.leaderboard.eyebrow')}
+            </p>
+            <h3 className="truncate text-xs font-semibold text-foreground" title={title}>{title}</h3>
+          </div>
+        </div>
+        <span className="openworld-leaderboard-count">
+          TOP {Math.min(rows.length, MAX_ITEMS)}
+        </span>
       </div>
 
       {loading && (
@@ -104,7 +118,7 @@ export function LeaderboardTable({ leaderboard, isZh, loading, onRowClick }: Lea
       )}
 
       {!loading && rows.length > 0 && (
-        <ul className="dark-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto pr-1">
+        <ul className="dark-scrollbar flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-1.5">
           {rows.map((row) => {
             const flagSrc = flagUrlFromCode(row.code)
             const change = formatChange(row.change, isZh)
@@ -116,15 +130,16 @@ export function LeaderboardTable({ leaderboard, isZh, loading, onRowClick }: Lea
                   disabled={!clickable}
                   onClick={() => clickable && onRowClick?.(row)}
                   className={[
-                    'flex w-full items-center gap-2 rounded-md border border-transparent bg-transparent px-2 py-1 transition-colors duration-150',
+                    'openworld-leaderboard-row flex w-full items-center gap-1.5 rounded-lg border border-transparent px-1.5 py-1 transition-colors duration-150',
+                    row.rank <= 3 ? `openworld-leaderboard-row--rank-${row.rank}` : '',
                     clickable
-                      ? 'cursor-pointer hover:border-border hover:bg-secondary/55'
+                      ? 'cursor-pointer hover:border-primary/25 hover:bg-secondary/55'
                       : 'cursor-default',
                   ].join(' ')}
                   title={isZh ? row.name_zh || row.name : row.name}
                 >
                   <span
-                    className={`w-5 shrink-0 text-center text-xs font-bold tabular-nums ${rankColor(row.rank)}`}
+                    className={`openworld-rank-number w-5 shrink-0 text-center text-[11px] font-bold tabular-nums ${rankColor(row.rank)}`}
                   >
                     {row.rank}
                   </span>
@@ -136,7 +151,7 @@ export function LeaderboardTable({ leaderboard, isZh, loading, onRowClick }: Lea
                       src={flagSrc || PLACEHOLDER_FLAG}
                       alt=""
                       onError={handleFlagError}
-                      className="h-[18px] w-6 shrink-0 bg-secondary object-cover"
+                      className="h-4 w-[22px] shrink-0 bg-secondary object-cover shadow-sm"
                       style={{ borderRadius: 2 }}
                       loading="lazy"
                       referrerPolicy="no-referrer"
@@ -171,7 +186,7 @@ export function LeaderboardTable({ leaderboard, isZh, loading, onRowClick }: Lea
                                 referrerPolicy="no-referrer"
                               />
                             )}
-                            <span className="min-w-0 truncate text-left text-xs text-foreground">
+                            <span className="min-w-0 truncate text-left text-[11px] font-medium text-foreground">
                               {text}
                             </span>
                           </span>
@@ -207,7 +222,7 @@ export function LeaderboardTable({ leaderboard, isZh, loading, onRowClick }: Lea
                       return (
                         <span
                           key={`${col.name}-${idx}`}
-                          className="min-w-0 truncate text-left text-xs text-foreground"
+                          className="min-w-0 truncate text-left text-[11px] font-medium text-foreground"
                         >
                           {text}
                         </span>
@@ -216,11 +231,11 @@ export function LeaderboardTable({ leaderboard, isZh, loading, onRowClick }: Lea
                   </div>
 
                   {/* 数值 + change 固定追加在行尾 */}
-                  <span className="shrink-0 text-xs font-medium tabular-nums text-foreground">
+                  <span className="shrink-0 text-[11px] font-semibold tabular-nums text-foreground">
                     {formatCompactNumber(row.value, isZh)}
                   </span>
                   <span
-                    className={`shrink-0 w-16 text-right text-[10px] tabular-nums ${change.cls}`}
+                    className={`openworld-change-pill w-[4.15rem] shrink-0 text-right text-[9px] tabular-nums ${change.cls}`}
                     title={String(row.change)}
                   >
                     {change.arrow} {change.text}
@@ -231,6 +246,6 @@ export function LeaderboardTable({ leaderboard, isZh, loading, onRowClick }: Lea
           })}
         </ul>
       )}
-    </div>
+    </section>
   )
 }

@@ -28,6 +28,20 @@ export function normalizeRepoPlatform(platform: unknown): string {
   return head || 'github';
 }
 
+const REPO_PLATFORM_DISPLAY_NAMES: Record<string, string> = {
+  github: 'GitHub',
+  gitee: 'Gitee',
+  atomgit: 'AtomGit',
+  gitlab: 'GitLab',
+};
+
+/** Platform name formatted for display while keeping normalized slugs for data and routing. */
+export function getRepoPlatformDisplayName(platform: unknown): string {
+  const normalized = normalizeRepoPlatform(platform);
+  return REPO_PLATFORM_DISPLAY_NAMES[normalized]
+    ?? normalized.charAt(0).toUpperCase() + normalized.slice(1);
+}
+
 export function getRepoUrlByPlatform(platform: unknown, name: string): string {
   if (!name) return '#';
   const p = normalizeRepoPlatform(platform);

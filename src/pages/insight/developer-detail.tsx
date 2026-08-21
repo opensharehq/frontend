@@ -10,13 +10,24 @@ import {
 } from '@/app/components/ui/tooltip';
 import { fetchUserMeta } from './api/openDiggerTrend';
 import { fetchTalentBaseline, fetchUserTalent } from './api/talentProfile';
-import { getDeveloperProfileUrlByPlatform, inferDeveloperAvatarUrl } from './domain/repoPlatform';
+import {
+  getDeveloperProfileUrlByPlatform,
+  getRepoPlatformDisplayName,
+  inferDeveloperAvatarUrl,
+} from './domain/repoPlatform';
 import { getInsightHomePath } from './domain/routes';
 import { normalizeInsightLang } from './domain/lang';
 import type { TimeBounds } from './domain/timeRange';
 import { RepoPlatformIcon } from './components/RepoPlatformIcon';
 import { LeaderboardAvatar } from './components/LeaderboardAvatar';
 import { InsightDetailNav } from './components/InsightDetailNav';
+import {
+  InsightDetailHero,
+  InsightDetailMetricCard,
+  InsightDetailSectionHeader,
+  type InsightDetailIcon,
+  type InsightMetricTone,
+} from './components/InsightDetailVisuals';
 import { TalentRadarChart } from './components/TalentRadarChart';
 import { TalentPrTypePie } from './components/TalentPrTypePie';
 import { TalentTopRepos } from './components/TalentTopRepos';
@@ -209,6 +220,7 @@ export default function DeveloperDetailPage() {
       maxMonth: `${max}-12`,
     };
   }, [talentData]);
+  const latestTalentYear = talentYearBounds ? String(talentYearBounds.maxYear) : '';
 
   const profileUrl = getDeveloperProfileUrlByPlatform(platform, login);
   const avatarUrl = inferDeveloperAvatarUrl(platform, login, ossMeta?.id);
@@ -220,7 +232,7 @@ export default function DeveloperDetailPage() {
 
   if (loading) {
     return (
-      <div className="insight-detail-layout">
+      <div className="insight-detail-page insight-detail-layout">
         <div className="flex flex-col items-center justify-center gap-4 py-16 text-muted-foreground">
           <Icon icon="mdi:loading" className="text-4xl animate-spin" aria-hidden />
           <p>{t('insight.loadingUser')}</p>
@@ -231,7 +243,7 @@ export default function DeveloperDetailPage() {
 
   if (error || !ossMeta) {
     return (
-      <div className="insight-detail-layout">
+      <div className="insight-detail-page insight-detail-layout">
         <div className="flex flex-col items-center justify-center gap-4 py-16 text-muted-foreground">
           <Icon icon="mdi:database-off-outline" className="text-4xl" aria-hidden />
           <p className="text-center px-4">{t('insight.detailUserDataMissing')}</p>
@@ -244,7 +256,7 @@ export default function DeveloperDetailPage() {
   }
 
   return (
-    <div className="insight-detail-layout space-y-6">
+    <div className="insight-detail-page insight-detail-layout space-y-6">
       <InsightDetailNav
         homeLabel={t('insight.developerDetailBreadcrumbHome')}
         sectionLabel={t('insight.detailSectionDeveloper')}
@@ -252,71 +264,70 @@ export default function DeveloperDetailPage() {
         backLabel={t('insight.developerDetailBackToInsight')}
       />
 
-      {/* Developer info card */}
-      <div className="rounded-xl border border-border bg-card p-6">
-        <div className="flex flex-col items-start gap-4 sm:flex-row">
-          <div className="size-20 flex-shrink-0 sm:size-32">
-            <LeaderboardAvatar
-              avatar={avatarUrl}
-              displayName={displayName}
-              sizeClass="size-20 sm:size-32"
-              circular
-              bordered={false}
-            />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="min-w-0 break-words text-xl font-bold text-balance text-card-foreground">{displayName}</h1>
-              <span className="max-w-full break-all text-sm text-muted-foreground">@{login}</span>
-            </div>
-
-            {(profileLocation || profileCompany || profileBio) && (
-              <div className="mt-2 flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4">
-                {profileLocation && (
-                  <span className="flex min-w-0 items-center gap-1">
-                    <Icon icon="mdi:map-marker" className="size-4 text-muted-foreground" aria-hidden />
-                    <span className="min-w-0 break-words">{profileLocation}</span>
-                  </span>
-                )}
-                {profileCompany && (
-                  <span className="flex min-w-0 items-center gap-1">
-                    <Icon icon="mdi:domain" className="size-4 text-muted-foreground" aria-hidden />
-                    <span className="min-w-0 break-words">{profileCompany}</span>
-                  </span>
-                )}
-                {profileBio && (
-                  <span className="flex min-w-0 items-center gap-1">
-                    <Icon icon="mdi:card-text-outline" className="size-4 text-muted-foreground" aria-hidden />
-                    <span className="min-w-0 break-words">{profileBio}</span>
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* External link button */}
+      <InsightDetailHero
+        tone="developer"
+        eyebrow={t('insight.detailDataProfile')}
+        kindLabel={t('insight.detailSectionDeveloper')}
+        title={displayName}
+        titleMeta={<span className="insight-detail-hero__title-meta">@{login}</span>}
+        avatar={(
+          <LeaderboardAvatar
+            avatar={avatarUrl}
+            displayName={displayName}
+            sizeClass="size-full"
+            circular
+            bordered={false}
+          />
+        )}
+        badges={(
+          <span className="insight-detail-hero__badge gap-1.5">
+            <RepoPlatformIcon platform={platform} size="xs" />
+            {getRepoPlatformDisplayName(platform)}
+          </span>
+        )}
+        description={profileBio}
+        meta={(profileLocation || profileCompany) ? (
+          <>
+            {profileLocation ? (
+              <span className="insight-detail-hero__meta-item">
+                <Icon icon="mdi:map-marker-outline" className="size-4" aria-hidden />
+                <span className="break-words">{profileLocation}</span>
+              </span>
+            ) : null}
+            {profileCompany ? (
+              <span className="insight-detail-hero__meta-item">
+                <Icon icon="mdi:domain" className="size-4" aria-hidden />
+                <span className="break-words">{profileCompany}</span>
+              </span>
+            ) : null}
+          </>
+        ) : null}
+        snapshotLabel={t('insight.detailLatestSnapshot')}
+        snapshotValue={latestTalentYear || '—'}
+        action={(
           <a
             href={profileUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex w-full flex-shrink-0 items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-auto"
+            className="insight-detail-hero__action inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <RepoPlatformIcon platform={platform} size="sm" />
             <span>{t('insight.detailDeveloperProfile')}</span>
             <Icon icon="mdi:open-in-new" className="size-3.5" aria-hidden />
           </a>
-        </div>
-      </div>
+        )}
+      />
 
       {/* Talent Profile Section */}
       {talentData && talentBaseline && talentYear && talentData[talentYear] && (
         <div className="space-y-6">
           {/* Section header with year selector (matches leaderboard time picker) */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-foreground">
-              {t('insight.talentProfileHeading')}
-            </h2>
-            {talentYearBounds ? (
+          <InsightDetailSectionHeader
+            icon="talent"
+            eyebrow={t('insight.detailTalentEyebrow')}
+            title={t('insight.talentProfileHeading')}
+            description={t('insight.detailTalentSummary')}
+            controls={talentYearBounds ? (
               <div className="min-w-[9rem] w-40 flex-shrink-0 sm:min-w-[9.5rem] sm:w-44">
                 <TimeRangePicker
                   meta={null}
@@ -334,7 +345,7 @@ export default function DeveloperDetailPage() {
                 />
               </div>
             ) : null}
-          </div>
+          />
 
           {/* OpenRank contribution highlight + activity stats */}
           {(() => {
@@ -345,55 +356,55 @@ export default function DeveloperDetailPage() {
               label: string;
               current: number;
               previous: number;
-              icon: string;
-              iconColor: string;
+              icon: InsightDetailIcon;
+              tone: InsightMetricTone;
             }[] = [
               {
                 label: t('insight.talentOpenIssues'),
                 current: currentYearData.openIssues,
                 previous: prevYearData.openIssues ?? 0,
-                icon: 'mdi:clipboard-alert-outline',
-                iconColor: 'text-chart-4',
+                icon: 'issuesOpen',
+                tone: 'violet',
               },
               {
                 label: t('insight.talentParticipantIssues'),
                 current: currentYearData.participantIssues,
                 previous: prevYearData.participantIssues ?? 0,
-                icon: 'mdi:clipboard-text-outline',
-                iconColor: 'text-chart-1',
+                icon: 'issuesParticipated',
+                tone: 'blue',
               },
               {
                 label: t('insight.talentOpenPrs'),
                 current: currentYearData.openPrs,
                 previous: prevYearData.openPrs ?? 0,
-                icon: 'mdi:source-pull',
-                iconColor: 'text-primary',
+                icon: 'prsOpen',
+                tone: 'lime',
               },
               {
                 label: t('insight.talentMergedPrs'),
                 current: currentYearData.mergedPrs,
                 previous: prevYearData.mergedPrs ?? 0,
-                icon: 'mdi:source-merge',
-                iconColor: 'text-chart-2',
+                icon: 'prsMerged',
+                tone: 'cyan',
               },
               {
                 label: t('insight.talentPrReviews'),
                 current: currentYearData.prReviews,
                 previous: prevYearData.prReviews ?? 0,
-                icon: 'mdi:comment-check-outline',
-                iconColor: 'text-chart-3',
+                icon: 'reviews',
+                tone: 'amber',
               },
               {
                 label: t('insight.talentCodeChanges'),
                 current: currentYearData.codeChanges,
                 previous: prevYearData.codeChanges ?? 0,
-                icon: 'mdi:code-braces',
-                iconColor: 'text-destructive',
+                icon: 'code',
+                tone: 'rose',
               },
             ];
             return (
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
-                <div className="flex flex-col justify-center rounded-xl border border-border bg-card p-6">
+                <div className="insight-detail-feature-card flex flex-col justify-center p-6">
                   {(() => {
                     const tier = computeOpenrankTier(
                       currentYearData.totalOpenrankContributions,
@@ -418,18 +429,15 @@ export default function DeveloperDetailPage() {
                 </div>
                 <div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {statItems.map((item) => (
-                    <div key={item.label} className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Icon icon={item.icon} className={`size-4 ${item.iconColor}`} aria-hidden />
-                        <span>{item.label}</span>
-                      </div>
-                      <div className="flex flex-wrap items-end gap-x-2 gap-y-1">
-                        <span className="text-2xl font-bold tabular-nums text-card-foreground">
-                          {item.current.toLocaleString()}
-                        </span>
-                        <YearDelta current={item.current} previous={item.previous} isInt />
-                      </div>
-                    </div>
+                    <InsightDetailMetricCard
+                      key={item.label}
+                      icon={item.icon}
+                      label={item.label}
+                      value={item.current.toLocaleString()}
+                      change={<YearDelta current={item.current} previous={item.previous} isInt />}
+                      tone={item.tone}
+                      compact
+                    />
                   ))}
                 </div>
               </div>
@@ -438,11 +446,11 @@ export default function DeveloperDetailPage() {
 
           {/* Radar chart + PR type pie */}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="rounded-xl border border-border bg-card p-6">
+            <div className="insight-detail-surface p-6">
               <h3 className="mb-4 text-sm font-semibold text-card-foreground">{t('insight.talentRadarTitle')}</h3>
               <TalentRadarChart yearData={talentData[talentYear]} baseline={talentBaseline} />
             </div>
-            <div className="rounded-xl border border-border bg-card p-6">
+            <div className="insight-detail-surface p-6">
               <h3 className="mb-4 flex items-center justify-between text-sm font-semibold text-card-foreground">
                 {t('insight.talentPrTypeTitle')}
                 <Tooltip>
@@ -466,7 +474,7 @@ export default function DeveloperDetailPage() {
 
           {/* Top repos */}
           {talentData[talentYear].openRankContributionTop10.length > 0 && (
-            <div className="rounded-xl border border-border bg-card p-6">
+            <div className="insight-detail-surface p-6">
               <h3 className="mb-4 text-sm font-semibold text-card-foreground">{t('insight.talentTopReposTitle')}</h3>
               <TalentTopRepos repos={talentData[talentYear].openRankContributionTop10} />
             </div>
@@ -474,7 +482,7 @@ export default function DeveloperDetailPage() {
 
           {/* Tech areas */}
           {talentData[talentYear].openRankContributionByTechArea.length > 0 && (
-            <div className="rounded-xl border border-border bg-card p-6">
+            <div className="insight-detail-surface p-6">
               <h3 className="mb-4 text-sm font-semibold text-card-foreground">{t('insight.talentTechAreaTitle')}</h3>
               <TalentTechAreas areas={talentData[talentYear].openRankContributionByTechArea} />
             </div>

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { ShoppingBag, Package, Tag, ClipboardList } from 'lucide-react';
 import api, { getApiError } from '@/lib/api';
+import { orderShopItems } from '@/lib/shop-order';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Badge } from '@/app/components/ui/badge';
 import { Skeleton } from '@/app/components/ui/skeleton';
@@ -24,6 +25,7 @@ interface ShopItem {
   description_en: string;
   cost: number;
   stock: number | null;
+  priority: number;
   image_card_url: string | null;
   image_detail_url: string | null;
   requires_shipping: boolean;
@@ -115,7 +117,8 @@ export default function ShopPage() {
 
   if (!data) return null;
 
-  const { items, balance: user_balance } = data;
+  const { balance: user_balance } = data;
+  const items = orderShopItems(data.items);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">

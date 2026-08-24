@@ -25,7 +25,7 @@ interface ShopItem {
   description_en: string;
   cost: number;
   stock: number | null;
-  priority: number;
+  priority?: number | null;
   image_card_url: string | null;
   image_detail_url: string | null;
   requires_shipping: boolean;

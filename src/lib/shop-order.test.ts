@@ -35,4 +35,22 @@ describe('orderShopItems', () => {
       'second',
     ]);
   });
+
+  it('defaults missing, null, and invalid priorities to one', () => {
+    const items = [
+      { id: 'valid-high', stock: 1, priority: 2 },
+      { id: 'missing', stock: 1 },
+      { id: 'null', stock: 1, priority: null },
+      { id: 'not-a-number', stock: 1, priority: Number.NaN },
+      { id: 'valid-low', stock: 1, priority: 0 },
+    ];
+
+    expect(orderShopItems(items).map((item) => item.id)).toEqual([
+      'valid-high',
+      'missing',
+      'null',
+      'not-a-number',
+      'valid-low',
+    ]);
+  });
 });

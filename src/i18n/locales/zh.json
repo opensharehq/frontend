@@ -501,14 +501,14 @@
     "stock": "库存: {{count}}",
     "insufficientPoints": "积分不足",
     "redeemNow": "立即兑换",
-    "tagOnly": "仅限 {{tags}} 标签积分",
+    "tagOnly": "支持 {{tags}} 标签积分",
     "loadFailed": "加载商品列表失败",
     "itemNotFound": "商品未找到",
     "backToShop": "返回商城",
     "requiredPoints": "所需积分",
     "stockStatus": "库存状态",
     "myPoints": "我的积分",
-    "tagOnlyRedeem": "仅限以下标签积分兑换：",
+    "tagOnlyRedeem": "该商品支持以下标签积分，也可选择通用礼物积分或现金积分：",
     "confirmRedeem": "确认兑换",
     "confirmRedeemDesc": "确认使用 {{cost}} 积分兑换「{{name}}」？此操作不可撤销。",
     "redeeming": "兑换中...",
@@ -535,7 +535,14 @@
     "paymentCash": "现金积分",
     "paymentBalance": "余额：{{balance}}",
     "insufficientBalance": "余额不足",
-    "selectPayment": "请选择支付方式"
+    "selectPayment": "请选择支付方式",
+    "topUpTitle": "积分不足，可手动补足",
+    "topUpShortfall": "当前主支付积分还差 {{amount}}",
+    "useUniversalTopUp": "使用最多 {{amount}} 通用礼物积分补足（余额 {{balance}}）",
+    "useCashTopUp": "使用 {{amount}} 现金积分补足（余额 {{balance}}）",
+    "cashTopUpWarning": "现金积分可用于提现；确认兑换后，本次使用的现金积分不可恢复。",
+    "paymentPreview": "本次预计扣除",
+    "remainingShortfall": "仍缺少"
   },
   "redemptions": {
     "title": "兑换记录",
@@ -546,7 +553,8 @@
     "completed": "已完成",
     "pending": "处理中",
     "cancelled": "已取消",
-    "loadFailed": "加载兑换记录失败"
+    "loadFailed": "加载兑换记录失败",
+    "paymentBreakdown": "支付明细："
   },
   "messages": {
     "title": "消息中心",

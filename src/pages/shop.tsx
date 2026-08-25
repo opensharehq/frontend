@@ -5,6 +5,7 @@ import i18n from '@/i18n';
 import { ShoppingBag, Package, Tag, ClipboardList } from 'lucide-react';
 import api, { getApiError } from '@/lib/api';
 import { orderShopItems } from '@/lib/shop-order';
+import { canAffordRedemption } from '@/lib/redemption-payment';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Badge } from '@/app/components/ui/badge';
 import { Skeleton } from '@/app/components/ui/skeleton';
@@ -63,13 +64,12 @@ function getStockLabel(stock: number | null, t: (key: string, options?: Record<s
 }
 
 function canAfford(item: ShopItem, balance: UserBalance): boolean {
-  if (item.allowed_tags.length > 0) {
-    const tagBalance = item.allowed_tags.reduce((sum, tag) => {
-      return sum + (balance.by_tag[tag.slug] || 0);
-    }, 0);
-    return (tagBalance + balance.gift_no_tag) >= item.cost;
-  }
-  return balance.gift >= item.cost;
+  return canAffordRedemption(
+    item.cost,
+    item.allowed_tags.map(tag => balance.by_tag[tag.slug] || 0),
+    balance.gift_no_tag,
+    balance.cash,
+  );
 }
 
 const getLocalizedField = (item: ShopItem, field: string): string => {

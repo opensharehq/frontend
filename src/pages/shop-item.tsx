@@ -5,11 +5,13 @@ import ReactMarkdown from 'react-markdown';
 import i18n from '@/i18n';
 import { Package, MapPin, ArrowLeft, Tag, CheckCircle, Wallet } from 'lucide-react';
 import api, { getApiError } from '@/lib/api';
+import { calculateRedemptionPayment } from '@/lib/redemption-payment';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Badge } from '@/app/components/ui/badge';
 import { Button } from '@/app/components/ui/button';
 import { Separator } from '@/app/components/ui/separator';
 import { Label } from '@/app/components/ui/label';
+import { Checkbox } from '@/app/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/app/components/ui/radio-group';
 import {
   AlertDialog,
@@ -74,11 +76,16 @@ interface WalletResponse {
 
 interface RedemptionResponse {
   id: number;
-  item: { id: number; name: string };
+  item: { id: number; name_zh: string; name_en: string };
   status: string;
-  points_cost_at_redemption: number;
+  points_cost: number;
   created_at: string;
   coupon_code: string | null;
+  payment_lines: Array<{
+    point_type: 'gift' | 'cash';
+    tag_slug: string | null;
+    amount: number;
+  }>;
 }
 
 interface PaymentOption {
@@ -129,6 +136,8 @@ export default function ShopItemPage() {
   const [loading, setLoading] = useState(true);
   const [selectedAddressId, setSelectedAddressId] = useState<string>('');
   const [selectedPayment, setSelectedPayment] = useState<string>('');
+  const [useUntaggedGift, setUseUntaggedGift] = useState(false);
+  const [useCash, setUseCash] = useState(false);
   const [redeeming, setRedeeming] = useState(false);
   const [redeemed, setRedeemed] = useState(false);
   const [couponCode, setCouponCode] = useState<string | null>(null);
@@ -142,6 +151,8 @@ export default function ShopItemPage() {
         ]);
         setItem(itemRes.data);
         setBalance(walletRes.data.balance);
+        const defaultTag = itemRes.data.allowed_tags[0];
+        setSelectedPayment(defaultTag ? `gift:${defaultTag.slug}` : 'gift');
         // 预选默认地址
         const addresses = itemRes.data.shipping_addresses ?? [];
         const defaultAddr = addresses.find(a => a.is_default);
@@ -170,11 +181,15 @@ export default function ShopItemPage() {
         lang: string;
         point_type: string;
         tag_slug: string | null;
+        use_untagged_gift: boolean;
+        use_cash: boolean;
       } = {
         item_id: item.id,
         lang: i18n.language === 'zh' ? 'zh' : 'en',
         point_type: 'gift',
         tag_slug: null,
+        use_untagged_gift: useUntaggedGift,
+        use_cash: useCash,
       };
       if (selectedPayment) {
         const [type, ...tagParts] = selectedPayment.split(':');
@@ -239,13 +254,13 @@ export default function ShopItemPage() {
       }
     }
 
-    // 通用礼物积分（对所有商品可用）
+    // 通用礼物积分对所有商品都可作为主支付积分使用。
     options.push({
       type: 'gift',
       tag_slug: null,
       tag_name: null,
-      balance: balance.gift,
-      sufficient: balance.gift >= item.cost,
+      balance: balance.gift_no_tag,
+      sufficient: balance.gift_no_tag >= item.cost,
     });
 
     // 现金积分（对所有商品可用）
@@ -260,19 +275,62 @@ export default function ShopItemPage() {
     return options;
   })();
 
-  // 初始化默认支付选项（首次渲染时选第一个）
   const paymentKey = (opt: PaymentOption) =>
     opt.type + (opt.tag_slug ? `:${opt.tag_slug}` : '');
-
-  if (!selectedPayment && paymentOptions.length > 0) {
-    // 延迟设置，避免 SSR 不一致
-    setTimeout(() => setSelectedPayment(paymentKey(paymentOptions[0])), 0);
-  }
 
   const currentPayment = paymentOptions.find(
     opt => paymentKey(opt) === selectedPayment,
   );
-  const canRedeem = !soldOut && (currentPayment?.sufficient ?? false);
+  const paymentPlan = currentPayment
+    ? calculateRedemptionPayment({
+        cost: item.cost,
+        primary: {
+          type: currentPayment.type,
+          tagSlug: currentPayment.tag_slug,
+          balance: currentPayment.balance,
+        },
+        untaggedGiftBalance: balance.gift_no_tag,
+        cashBalance: balance.cash,
+        useUntaggedGift,
+        useCash,
+      })
+    : null;
+  const canRedeem = !soldOut && (paymentPlan?.sufficient ?? false);
+
+  const primaryShortfall = currentPayment
+    ? Math.max(item.cost - currentPayment.balance, 0)
+    : item.cost;
+  const canOfferUntaggedGift = Boolean(
+    currentPayment?.type === 'gift' &&
+      currentPayment.tag_slug &&
+      primaryShortfall > 0 &&
+      balance.gift_no_tag > 0,
+  );
+  const untaggedGiftTopUpAmount = canOfferUntaggedGift
+    ? Math.min(balance.gift_no_tag, primaryShortfall)
+    : 0;
+  const shortfallAfterGift = Math.max(
+    primaryShortfall -
+      (useUntaggedGift ? untaggedGiftTopUpAmount : 0),
+    0,
+  );
+  const canOfferCash = Boolean(
+    currentPayment?.type === 'gift' &&
+      shortfallAfterGift > 0 &&
+      balance.cash > 0,
+  );
+  const cashTopUpAmount = canOfferCash
+    ? Math.min(balance.cash, shortfallAfterGift)
+    : 0;
+  const displayedUntaggedGiftBalance =
+    balance.gift_no_tag - (useUntaggedGift ? untaggedGiftTopUpAmount : 0);
+  const displayedCashBalance = balance.cash - (useCash ? cashTopUpAmount : 0);
+
+  const handlePaymentChange = (value: string) => {
+    setSelectedPayment(value);
+    setUseUntaggedGift(false);
+    setUseCash(false);
+  };
 
   // 当前支付方式的余额（用于展示）
   const currentBalance = currentPayment?.balance ?? 0;
@@ -379,7 +437,7 @@ export default function ShopItemPage() {
           )}
 
           {/* 兑换确认区 */}
-          {canRedeem && (
+          {!soldOut && currentPayment && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">{t('shop.confirmRedeemTitle')}</CardTitle>
@@ -393,7 +451,7 @@ export default function ShopItemPage() {
                   </Label>
                   <RadioGroup
                     value={selectedPayment}
-                    onValueChange={setSelectedPayment}
+                    onValueChange={handlePaymentChange}
                   >
                     {paymentOptions.map((opt) => {
                       const key = paymentKey(opt);
@@ -409,7 +467,7 @@ export default function ShopItemPage() {
                         <div
                           key={key}
                           className="flex items-center justify-between rounded-lg border p-3 cursor-pointer hover:bg-accent/50 transition-colors"
-                          onClick={() => setSelectedPayment(key)}
+                          onClick={() => handlePaymentChange(key)}
                         >
                           <div className="flex items-center gap-3">
                             <RadioGroupItem value={key} id={`payment-${key}`} />
@@ -432,6 +490,83 @@ export default function ShopItemPage() {
                     })}
                   </RadioGroup>
                 </div>
+
+                {currentPayment.type === 'gift' && primaryShortfall > 0 && (
+                  <div className="space-y-3 rounded-lg border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-900 dark:bg-amber-950/20">
+                    <div>
+                      <p className="font-medium text-sm">{t('shop.topUpTitle')}</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {t('shop.topUpShortfall', { amount: primaryShortfall.toLocaleString() })}
+                      </p>
+                    </div>
+
+                    {canOfferUntaggedGift && (
+                      <div className="flex items-start gap-3">
+                        <Checkbox
+                          id="use-untagged-gift"
+                          checked={useUntaggedGift}
+                          onCheckedChange={checked => setUseUntaggedGift(checked === true)}
+                        />
+                        <Label htmlFor="use-untagged-gift" className="cursor-pointer font-normal leading-snug">
+                          {t('shop.useUniversalTopUp', {
+                            amount: untaggedGiftTopUpAmount.toLocaleString(),
+                            balance: displayedUntaggedGiftBalance.toLocaleString(),
+                          })}
+                        </Label>
+                      </div>
+                    )}
+
+                    {canOfferCash && (
+                      <div className="flex items-start gap-3">
+                        <Checkbox
+                          id="use-cash-topup"
+                          checked={useCash}
+                          onCheckedChange={checked => setUseCash(checked === true)}
+                        />
+                        <div className="min-w-0 flex-1 space-y-2">
+                          <Label htmlFor="use-cash-topup" className="cursor-pointer font-normal leading-snug">
+                            {t('shop.useCashTopUp', {
+                              amount: cashTopUpAmount.toLocaleString(),
+                              balance: displayedCashBalance.toLocaleString(),
+                            })}
+                          </Label>
+                          <p className="rounded-md border border-amber-300 bg-amber-100/60 px-3 py-2 text-xs leading-relaxed text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+                            {t('shop.cashTopUpWarning')}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {paymentPlan && (
+                  <div className="space-y-2 rounded-lg bg-muted/50 p-4">
+                    <Label>{t('shop.paymentPreview')}</Label>
+                    {paymentPlan.lines.map((line) => {
+                      const tag = item.allowed_tags.find(option => option.slug === line.tagSlug);
+                      const label = line.pointType === 'cash'
+                        ? t('shop.paymentCash')
+                        : line.tagSlug
+                          ? t('shop.paymentGiftTagged', { tag: tag?.name ?? line.tagSlug })
+                          : t('shop.paymentGiftUntagged');
+                      return (
+                        <div
+                          key={`${line.pointType}:${line.tagSlug ?? 'untagged'}`}
+                          className="flex justify-between text-sm"
+                        >
+                          <span className="text-muted-foreground">{label}</span>
+                          <span className="font-medium">{line.amount.toLocaleString()}</span>
+                        </div>
+                      );
+                    })}
+                    {paymentPlan.remaining > 0 && (
+                      <div className="flex justify-between text-sm text-destructive font-medium">
+                        <span>{t('shop.remainingShortfall')}</span>
+                        <span>{paymentPlan.remaining.toLocaleString()}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* 收货地址选择 */}
                 {item.requires_shipping && (
@@ -484,7 +619,7 @@ export default function ShopItemPage() {
                   <AlertDialogTrigger asChild>
                     <Button
                       className="w-full bg-green-600 hover:bg-green-700 text-white"
-                      disabled={item.requires_shipping && !selectedAddressId}
+                      disabled={!canRedeem || (item.requires_shipping && !selectedAddressId)}
                     >
                       {t('shop.confirmRedeem')}
                     </Button>
@@ -508,20 +643,23 @@ export default function ShopItemPage() {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
+                {!canRedeem && (
+                  <p className="text-center text-sm text-muted-foreground">
+                    {t('shop.insufficientHint')}
+                  </p>
+                )}
               </CardContent>
             </Card>
           )}
 
           {/* 不可兑换提示 */}
-          {!canRedeem && (
+          {(soldOut || !currentPayment) && (
             <Card>
               <CardContent className="py-6 text-center text-muted-foreground">
                 {soldOut ? (
                   <p>{t('shop.soldOutHint')}</p>
-                ) : !currentPayment ? (
-                  <p>{t('shop.selectPayment')}</p>
                 ) : (
-                  <p>{t('shop.insufficientHint')}</p>
+                  <p>{t('shop.selectPayment')}</p>
                 )}
                 <Button asChild variant="link" className="mt-2">
                   <Link to="/shop">{t('shop.backToShop')}</Link>

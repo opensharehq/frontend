@@ -8,7 +8,7 @@ In accordance with the Civil Code of the People's Republic of China and other re
 
 ## 2. Points Types and Redemption Scope
 1. Points under this Agreement are classified into withdrawable points and non-withdrawable points, which may only be used in accordance with this Agreement and platform-published rules. They are not transferable across platforms. Points themselves do not have the nature of legal tender and shall not be used for illegal activities such as cashing out or gambling.
-2. Withdrawable points: Cash withdrawal may only be applied for at the published ratio and shall not be used for other redemption purposes. Non-withdrawable points: Designated products/rights in the online points mall may only be redeemed and cash withdrawal shall not be applied for. The two types of points are not convertible to each other.
+2. Withdrawable points may be withdrawn for cash at the published ratio, or, after the user has been fully informed and has actively confirmed, used to redeem products or benefits in the online points shop or cover a redemption shortfall. Non-withdrawable points may be used to redeem designated products or benefits in the online points shop and may not be withdrawn for cash. During a shop redemption, the user may combine tagged non-withdrawable points, untagged non-withdrawable points, and withdrawable points according to the rules displayed on the product page. Combined use does not change the original type or source record of any points.
 
 ## 3. Rules for Withdrawable Points Redemption
 ### 3.1 Withdrawal Conditions
@@ -34,7 +34,7 @@ In accordance with the Civil Code of the People's Republic of China and other re
 3. Products in the online points mall are available on a “first-come, first-served, while stocks last” basis. No liability shall be borne for compensation if redemption fails due to product shortage.
 
 ### 4.2 Redemption Operation and Review
-1. After selecting a product for redemption in the points mall, the operation shall be completed as prompted. Upon confirmation of redemption, the corresponding quantity of non-withdrawable points shall be immediately deducted from the account. Points are non-refundable once deducted.
+1. After selecting a product in the points shop, the user shall choose the primary point balance and whether to use other eligible points to cover any shortfall. Once the user confirms the redemption, the platform will immediately deduct the points shown in the payment breakdown. The deduction may include tagged non-withdrawable points, untagged non-withdrawable points, and withdrawable points that the user has actively confirmed for use. Deducted points are non-refundable.
 2. After points deduction, the product redemption code, usage link, activation method, etc. shall be immediately sent to the mobile phone/email address bound to the account.
 
 ### 4.3 Product Usage and After-Sales Service
@@ -52,7 +52,7 @@ In accordance with the Civil Code of the People's Republic of China and other re
 6. The right is reserved to require truthful provision and timely update of bank account information related to points withdrawal, and reject withdrawal applications for false account information provided. If the bank account information is frozen, closed, reported lost or in other abnormal status, the right is reserved to suspend withdrawal services until valid account information is updated. Losses such as fund interest and delayed arrival during the suspension period shall be borne.
 
 ### 5.2 Rights and Obligations
-1. The right is reserved to apply for cash withdrawal of withdrawable points or redeem digital products/rights corresponding to non-withdrawable points in the points mall in accordance with this Agreement and platform-published rules.
+1. Users may apply to withdraw withdrawable points for cash or use eligible points to redeem digital products or benefits in the points shop in accordance with this Agreement and the platform's published rules. Where the product page clearly displays the payment breakdown, users may actively choose to use withdrawable points to cover a redemption shortfall.
 2. The right is reserved to inquire about points balance, points redemption records, bank fee deduction details and other information, and apply for review of disputed records.
 3. Truthful and accurate provision of bank account information related to points withdrawal, ensuring that the account information is true, valid and consistent with real-name authentication information. If the bank account is changed, reported lost, closed or otherwise modified, immediate update shall be made. Otherwise, consequences such as withdrawal failure, fund return or non-arrival shall be borne.
 4. Ensuring that points are obtained legally and not through illegal means such as cheating, false transactions or malicious brushing. If the above acts are committed, the right is reserved to freeze and revoke all points, terminate this Agreement, recover withdrawn funds or redeemed products, and pursue legal liabilities.

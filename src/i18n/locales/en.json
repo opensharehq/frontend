@@ -501,14 +501,14 @@
     "stock": "Stock: {{count}}",
     "insufficientPoints": "Insufficient Points",
     "redeemNow": "Redeem Now",
-    "tagOnly": "{{tags}} tagged points only",
+    "tagOnly": "Supports {{tags}} tagged points",
     "loadFailed": "Failed to load shop items",
     "itemNotFound": "Item not found",
     "backToShop": "Back to Shop",
     "requiredPoints": "Required Points",
     "stockStatus": "Stock Status",
     "myPoints": "My Points",
-    "tagOnlyRedeem": "Only the following tagged points can be used:",
+    "tagOnlyRedeem": "This item supports the tagged points below, universal gift points, and cash points:",
     "confirmRedeem": "Confirm Redemption",
     "confirmRedeemDesc": "Confirm using {{cost}} points to redeem \"{{name}}\"? This action cannot be undone.",
     "redeeming": "Redeeming...",
@@ -535,7 +535,14 @@
     "paymentCash": "Cash Points",
     "paymentBalance": "Balance: {{balance}}",
     "insufficientBalance": "Insufficient Balance",
-    "selectPayment": "Please select a payment method"
+    "selectPayment": "Please select a payment method",
+    "topUpTitle": "Not enough points — cover the shortfall manually",
+    "topUpShortfall": "The primary balance is short by {{amount}}",
+    "useUniversalTopUp": "Use up to {{amount}} universal gift points (balance {{balance}})",
+    "useCashTopUp": "Use {{amount}} cash points to cover the shortfall (balance {{balance}})",
+    "cashTopUpWarning": "Cash points can be withdrawn. Cash points used for this redemption cannot be restored.",
+    "paymentPreview": "Estimated deduction",
+    "remainingShortfall": "Still needed"
   },
   "redemptions": {
     "title": "Redemption History",
@@ -546,7 +553,8 @@
     "completed": "Completed",
     "pending": "Processing",
     "cancelled": "Cancelled",
-    "loadFailed": "Failed to load redemption records"
+    "loadFailed": "Failed to load redemption records",
+    "paymentBreakdown": "Payment:"
   },
   "messages": {
     "title": "Messages",

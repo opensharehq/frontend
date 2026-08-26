@@ -16,7 +16,7 @@ interface RedemptionItem {
   name_en: string;
   image_card_url: string | null;
   image_detail_url: string | null;
-  allowed_tags: Array<{ slug: string; name: string }>;
+  allowed_tags?: Array<{ slug: string; name: string }> | null;
 }
 
 interface ShippingAddress {
@@ -32,11 +32,11 @@ interface Redemption {
   status: 'COMPLETED' | 'PENDING' | 'CANCELLED';
   shipping_address: ShippingAddress | null;
   created_at: string;
-  payment_lines: Array<{
+  payment_lines?: Array<{
     point_type: 'gift' | 'cash';
     tag_slug: string | null;
     amount: number;
-  }>;
+  }> | null;
 }
 
 interface RedemptionsResponse {
@@ -122,6 +122,8 @@ export default function RedemptionsPage() {
         <div className="space-y-4">
           {items.map((redemption) => {
             const statusBadge = getStatusBadge(redemption.status, t);
+            const paymentLines = redemption.payment_lines ?? [];
+            const allowedTags = redemption.item.allowed_tags ?? [];
             return (
               <div
                 key={redemption.id}
@@ -152,11 +154,11 @@ export default function RedemptionsPage() {
                     <span>{t('redemptions.costPoints', { amount: redemption.points_cost.toLocaleString() })}</span>
                     <span>{format(new Date(redemption.created_at), 'yyyy-MM-dd HH:mm')}</span>
                   </div>
-                  {redemption.payment_lines.length > 0 && (
+                  {paymentLines.length > 0 && (
                     <p className="text-xs text-muted-foreground">
                       {t('redemptions.paymentBreakdown')}{' '}
-                      {redemption.payment_lines.map((line) => {
-                        const tag = redemption.item.allowed_tags.find(
+                      {paymentLines.map((line) => {
+                        const tag = allowedTags.find(
                           option => option.slug === line.tag_slug,
                         );
                         const label = line.point_type === 'cash'

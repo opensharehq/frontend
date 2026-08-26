@@ -332,9 +332,6 @@ export default function ShopItemPage() {
     setUseCash(false);
   };
 
-  // 当前支付方式的余额（用于展示）
-  const currentBalance = currentPayment?.balance ?? 0;
-
   // 兑换成功状态
   if (redeemed) {
     return (
@@ -370,7 +367,7 @@ export default function ShopItemPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6">
       {/* 返回按钮 */}
       <Button asChild variant="ghost" size="sm">
         <Link to="/shop">
@@ -379,11 +376,13 @@ export default function ShopItemPage() {
         </Link>
       </Button>
 
+      <h1 className="text-2xl font-bold lg:hidden">{getLocalizedField(item, 'name')}</h1>
+
       {/* 商品信息 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* 左列：商品大图 + 付款信息 */}
-        <div className="space-y-4">
-          <div className="aspect-square max-w-72 bg-muted rounded-xl flex items-center justify-center overflow-hidden mx-auto">
+      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-10">
+        {/* 左列：商品大图 + 详情描述 */}
+        <div className="space-y-6">
+          <div className="aspect-square w-full max-w-xl bg-muted rounded-xl flex items-center justify-center overflow-hidden mx-auto">
             {item.image_detail_url ? (
               <img
                 src={item.image_detail_url}
@@ -395,29 +394,26 @@ export default function ShopItemPage() {
             )}
           </div>
 
-          <div className="max-w-72 mx-auto space-y-3">
-            <div className="flex items-center justify-between">
+          <div className={MARKDOWN_PROSE_CLASS}>
+            <ReactMarkdown>{getLocalizedField(item, 'description')}</ReactMarkdown>
+          </div>
+        </div>
+
+        {/* 右列：商品信息 + 兑换确认 */}
+        <div className="space-y-5">
+          <h1 className="hidden text-2xl font-bold lg:block">{getLocalizedField(item, 'name')}</h1>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-4">
               <span className="text-sm text-muted-foreground">{t('shop.requiredPoints')}</span>
               <span className="text-2xl font-bold text-primary">
                 {item.cost.toLocaleString()}
               </span>
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
               <span className="text-sm text-muted-foreground">{t('shop.stockStatus')}</span>
               <Badge variant={stockInfo.variant}>{stockInfo.text}</Badge>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">{t('shop.myPoints')}</span>
-              <span className="font-medium">{currentBalance.toLocaleString()}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 右列：商品详情 + 兑换确认 */}
-        <div className="space-y-4">
-          <h1 className="text-2xl font-bold">{getLocalizedField(item, 'name')}</h1>
-          <div className={MARKDOWN_PROSE_CLASS}>
-            <ReactMarkdown>{getLocalizedField(item, 'description')}</ReactMarkdown>
           </div>
 
           {/* 标签限制 */}

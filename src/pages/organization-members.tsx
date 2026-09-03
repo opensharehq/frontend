@@ -67,6 +67,10 @@ interface MemberCandidate {
 
 const ROLE_HIERARCHY: Record<string, number> = { owner: 3, admin: 2, member: 1 };
 
+function getCandidateDisplayName(candidate: MemberCandidate) {
+  return candidate.display_name.trim() || candidate.username;
+}
+
 function getRoleIcon(role: string) {
   switch (role) {
     case 'owner':
@@ -390,7 +394,9 @@ export default function OrganizationMembersPage() {
                   role="combobox"
                   aria-autocomplete="list"
                   aria-expanded={memberCandidates.length > 0}
-                  aria-controls="member-candidate-results"
+                  aria-controls={
+                    memberCandidates.length > 0 ? 'member-candidate-results' : undefined
+                  }
                   className="pl-9 pr-9"
                   placeholder={t('orgMembers.userSearchPlaceholder')}
                   value={memberQuery}
@@ -407,35 +413,38 @@ export default function OrganizationMembersPage() {
                   role="listbox"
                   className="max-h-56 overflow-y-auto rounded-md border bg-popover p-1"
                 >
-                  {memberCandidates.map((candidate) => (
-                    <button
-                      key={candidate.id}
-                      type="button"
-                      role="option"
-                      aria-selected={selectedCandidate?.id === candidate.id}
-                      className="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-left hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
-                      onClick={() => handleCandidateSelect(candidate)}
-                    >
-                      <Avatar className="size-8">
-                        <AvatarFallback className="text-xs">
-                          {(candidate.display_name || candidate.username).charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-medium">
-                          {candidate.display_name}
-                        </span>
-                        {candidate.display_name !== candidate.username && (
-                          <span className="block truncate text-xs text-muted-foreground">
-                            @{candidate.username}
+                  {memberCandidates.map((candidate) => {
+                    const displayName = getCandidateDisplayName(candidate);
+                    return (
+                      <button
+                        key={candidate.id}
+                        type="button"
+                        role="option"
+                        aria-selected={selectedCandidate?.id === candidate.id}
+                        className="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-left hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
+                        onClick={() => handleCandidateSelect(candidate)}
+                      >
+                        <Avatar className="size-8">
+                          <AvatarFallback className="text-xs">
+                            {displayName.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-medium">
+                            {displayName}
                           </span>
-                        )}
-                      </span>
-                      <span className="shrink-0 text-xs text-muted-foreground">
-                        ID: {candidate.id}
-                      </span>
-                    </button>
-                  ))}
+                          {displayName !== candidate.username && (
+                            <span className="block truncate text-xs text-muted-foreground">
+                              @{candidate.username}
+                            </span>
+                          )}
+                        </span>
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          ID: {candidate.id}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
               {memberSearchAttempted && !memberSearching && memberCandidates.length === 0 && (
@@ -448,7 +457,7 @@ export default function OrganizationMembersPage() {
               {selectedCandidate && (
                 <p className="text-sm text-foreground">
                   {t('orgMembers.selectedUser', {
-                    name: selectedCandidate.display_name,
+                    name: getCandidateDisplayName(selectedCandidate),
                     id: selectedCandidate.id,
                   })}
                 </p>

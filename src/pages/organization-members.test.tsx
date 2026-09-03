@@ -1,6 +1,6 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import OrganizationMembersPage from './organization-members';
 
 const apiMock = vi.hoisted(() => ({
@@ -9,7 +9,10 @@ const apiMock = vi.hoisted(() => ({
   patch: vi.fn(),
   delete: vi.fn(),
 }));
-const i18nMock = vi.hoisted(() => ({ t: (key: string) => key }));
+const i18nMock = vi.hoisted(() => ({
+  t: (key: string, values?: Record<string, unknown>) =>
+    values ? `${key} ${values.name ?? ''} ${values.id ?? ''}`.trim() : key,
+}));
 
 vi.mock('@/lib/api', () => ({
   default: apiMock,
@@ -35,7 +38,7 @@ describe('OrganizationMembersPage', () => {
       if (url.endsWith('/member-candidates')) {
         return {
           data: {
-            items: [{ id: 42, username: 'searchable_handle', display_name: 'Ming Zhao' }],
+            items: [{ id: 42, username: 'searchable_handle', display_name: '' }],
           },
         };
       }
@@ -53,6 +56,10 @@ describe('OrganizationMembersPage', () => {
     apiMock.post.mockResolvedValue({ data: {} });
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('searches for a candidate and adds the selected user', async () => {
     render(
       <MemoryRouter initialEntries={['/organizations/test-org/members']}>
@@ -63,17 +70,23 @@ describe('OrganizationMembersPage', () => {
     );
 
     fireEvent.click(await screen.findByRole('button', { name: 'orgMembers.addMember' }));
+    vi.useFakeTimers();
     fireEvent.change(screen.getByRole('combobox', { name: 'orgMembers.userSearch' }), {
-      target: { value: 'Ming' },
+      target: { value: 'searchable' },
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
     });
 
-    const candidate = await screen.findByRole('option', { name: /Ming Zhao/ });
+    const candidate = screen.getByRole('option', { name: /searchable_handle/ });
     expect(apiMock.get).toHaveBeenCalledWith(
       '/organizations/test-org/member-candidates',
-      expect.objectContaining({ params: { q: 'Ming' } }),
+      expect.objectContaining({ params: { q: 'searchable' } }),
     );
 
     fireEvent.click(candidate);
+    expect(screen.getByText('orgMembers.selectedUser searchable_handle 42')).toBeInTheDocument();
+    vi.useRealTimers();
     fireEvent.click(screen.getByRole('button', { name: 'common.submit' }));
 
     await waitFor(() => {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { format } from 'date-fns';
-import { ArrowLeft, Plus, Trash2, Crown, Shield, User, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Crown, Shield, User, Loader2, Search } from 'lucide-react';
 import api, { getApiError } from '@/lib/api';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth-context';
@@ -21,6 +21,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -56,6 +57,12 @@ interface Member {
   user: MemberUser;
   role: string;
   joined_at: string;
+}
+
+interface MemberCandidate {
+  id: number;
+  username: string;
+  display_name: string;
 }
 
 const ROLE_HIERARCHY: Record<string, number> = { owner: 3, admin: 2, member: 1 };
@@ -101,7 +108,12 @@ export default function OrganizationMembersPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [addUsername, setAddUsername] = useState('');
+  const [memberQuery, setMemberQuery] = useState('');
+  const [memberCandidates, setMemberCandidates] = useState<MemberCandidate[]>([]);
+  const [selectedCandidate, setSelectedCandidate] = useState<MemberCandidate | null>(null);
+  const [memberSearching, setMemberSearching] = useState(false);
+  const [memberSearchAttempted, setMemberSearchAttempted] = useState(false);
+  const [memberSearchFailed, setMemberSearchFailed] = useState(false);
   const [addRole, setAddRole] = useState('member');
   const [addLoading, setAddLoading] = useState(false);
   const [removeMember, setRemoveMember] = useState<Member | null>(null);
@@ -129,21 +141,86 @@ export default function OrganizationMembersPage() {
     fetchMembers();
   }, [fetchMembers]);
 
+  useEffect(() => {
+    const query = memberQuery.trim();
+    if (!showAddDialog || !query || selectedCandidate || !slug) return;
+
+    const controller = new AbortController();
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      setMemberSearching(true);
+      setMemberSearchFailed(false);
+      try {
+        const { data } = await api.get<{ items: MemberCandidate[] }>(
+          `/organizations/${slug}/member-candidates`,
+          { params: { q: query }, signal: controller.signal },
+        );
+        if (!active) return;
+        setMemberCandidates(data?.items ?? []);
+        setMemberSearchAttempted(true);
+      } catch {
+        if (!active || controller.signal.aborted) return;
+        setMemberCandidates([]);
+        setMemberSearchAttempted(true);
+        setMemberSearchFailed(true);
+      } finally {
+        if (active) setMemberSearching(false);
+      }
+    }, 300);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [memberQuery, selectedCandidate, showAddDialog, slug]);
+
+  function resetAddMemberForm() {
+    setMemberQuery('');
+    setMemberCandidates([]);
+    setSelectedCandidate(null);
+    setMemberSearching(false);
+    setMemberSearchAttempted(false);
+    setMemberSearchFailed(false);
+    setAddRole('member');
+  }
+
+  function handleAddDialogChange(open: boolean) {
+    setShowAddDialog(open);
+    if (!open) resetAddMemberForm();
+  }
+
+  function handleMemberQueryChange(value: string) {
+    setMemberQuery(value);
+    setSelectedCandidate(null);
+    setMemberCandidates([]);
+    setMemberSearching(false);
+    setMemberSearchAttempted(false);
+    setMemberSearchFailed(false);
+  }
+
+  function handleCandidateSelect(candidate: MemberCandidate) {
+    setSelectedCandidate(candidate);
+    setMemberQuery(candidate.username);
+    setMemberCandidates([]);
+    setMemberSearchAttempted(false);
+    setMemberSearchFailed(false);
+  }
+
   async function handleAddMember() {
-    if (!addUsername.trim()) {
-      toast.error(t('orgMembers.enterUsername'));
+    if (!selectedCandidate) {
+      toast.error(t('orgMembers.selectUser'));
       return;
     }
     setAddLoading(true);
     try {
       await api.post(`/organizations/${slug}/members`, {
-        username: addUsername.trim(),
+        username: selectedCandidate.username,
         role: addRole,
       });
       toast.success(t('orgMembers.addSuccess'));
       setShowAddDialog(false);
-      setAddUsername('');
-      setAddRole('member');
+      resetAddMemberForm();
       fetchMembers();
     } catch (error: unknown) {
       const apiError = getApiError(error);
@@ -297,19 +374,85 @@ export default function OrganizationMembersPage() {
       </div>
 
       {/* Add Member Dialog */}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+      <Dialog open={showAddDialog} onOpenChange={handleAddDialogChange}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('orgMembers.addMember')}</DialogTitle>
+            <DialogDescription>{t('orgMembers.addMemberDescription')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>{t('orgMembers.username')}</Label>
-              <Input
-                placeholder={t('orgMembers.usernamePlaceholder')}
-                value={addUsername}
-                onChange={(e) => setAddUsername(e.target.value)}
-              />
+              <Label htmlFor="member-search">{t('orgMembers.userSearch')}</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="member-search"
+                  role="combobox"
+                  aria-autocomplete="list"
+                  aria-expanded={memberCandidates.length > 0}
+                  aria-controls="member-candidate-results"
+                  className="pl-9 pr-9"
+                  placeholder={t('orgMembers.userSearchPlaceholder')}
+                  value={memberQuery}
+                  onChange={(e) => handleMemberQueryChange(e.target.value)}
+                />
+                {memberSearching && (
+                  <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">{t('orgMembers.userSearchHint')}</p>
+              {memberCandidates.length > 0 && (
+                <div
+                  id="member-candidate-results"
+                  role="listbox"
+                  className="max-h-56 overflow-y-auto rounded-md border bg-popover p-1"
+                >
+                  {memberCandidates.map((candidate) => (
+                    <button
+                      key={candidate.id}
+                      type="button"
+                      role="option"
+                      aria-selected={selectedCandidate?.id === candidate.id}
+                      className="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-left hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
+                      onClick={() => handleCandidateSelect(candidate)}
+                    >
+                      <Avatar className="size-8">
+                        <AvatarFallback className="text-xs">
+                          {(candidate.display_name || candidate.username).charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium">
+                          {candidate.display_name}
+                        </span>
+                        {candidate.display_name !== candidate.username && (
+                          <span className="block truncate text-xs text-muted-foreground">
+                            @{candidate.username}
+                          </span>
+                        )}
+                      </span>
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        ID: {candidate.id}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {memberSearchAttempted && !memberSearching && memberCandidates.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  {memberSearchFailed
+                    ? t('orgMembers.userSearchFailed')
+                    : t('orgMembers.noUserResults')}
+                </p>
+              )}
+              {selectedCandidate && (
+                <p className="text-sm text-foreground">
+                  {t('orgMembers.selectedUser', {
+                    name: selectedCandidate.display_name,
+                    id: selectedCandidate.id,
+                  })}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>{t('orgMembers.role')}</Label>
@@ -325,10 +468,10 @@ export default function OrganizationMembersPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+            <Button variant="outline" onClick={() => handleAddDialogChange(false)}>
               {t('common.cancel')}
             </Button>
-            <Button onClick={handleAddMember} disabled={addLoading}>
+            <Button onClick={handleAddMember} disabled={addLoading || !selectedCandidate}>
               {addLoading && <Loader2 className="size-4 animate-spin" />}
               {t('common.submit')}
             </Button>

@@ -7,14 +7,14 @@ OpenShare Frontend 是 `open-share-frontend` 的 Vite + React + TypeScript 前�
 ## 核心功能
 
 - 公开首页：展示 OpenShare 产品定位、平台数据源、产品矩阵、报告和生态价值，并提供登录后的全站搜索入口。
-- 社交登录：支持 GitHub 登录；中国大陆访问者额外展示 AtomGit 登录。登录前必须同意用户注册协议和积分兑换协议。
+- 社交登录：中国站支持 GitHub 与 AtomGit，国际站仅支持 GitHub。登录前必须同意用户注册协议和积分兑换协议。
 - 受保护应用壳：登录后进入带侧边栏的应用布局，支持路由鉴权、登录后回跳、未读消息轮询和侧边栏折叠状态持久化。
 - Insight 数据洞察：提供开源榜单筛选、分页、搜索、仓库/开发者/标签详情、趋势图、贡献地图和 OpenRank 相关数据展示。
 - 个人中心：展示和编辑个人资料、工作经历、教育经历、社交账号绑定状态和积分概览，也支持公开个人主页。
-- 积分体系：包括积分钱包、交易流水、提现申请、积分分配预览/执行、商城商品兑换和兑换记录。
+- 积分体系：包括积分钱包、交易流水、积分分配预览/执行、按站点上架的商城商品兑换和兑换记录；提现入口当前隐藏。
 - 组织管理：支持组织列表、创建、详情、成员管理、组织设置、头像上传、组织积分余额和组织交易流水。
 - 消息中心：支持消息列表、详情、类型/已读筛选、批量标记已读/未读、批量删除和未读数同步。
-- 设置：包括语言设置、收货地址、提现账号和账号合并；其中部分提现/地址入口会根据地区检测结果展示。
+- 设置：当前展示语言设置和账号合并；收货地址及提现账号入口暂时隐藏。
 - Talent Reach：当前为占位页面，页面文案显示功能开发中。
 
 ## 技术栈
@@ -52,6 +52,7 @@ npm i
 ```bash
 VITE_API_BASE_URL=http://localhost:8000/api/v1
 VITE_ATOMGIT_API_BASE_URL=http://127.0.0.1:8000/api/v1
+VITE_FRONTEND_SITE=cn
 ```
 
 启动开发服务器：
@@ -65,8 +66,19 @@ Vite 默认会启动在 `http://localhost:5173`。如果端口被占用，以终
 生产构建：
 
 ```bash
-npm run build
+VITE_FRONTEND_SITE=cn npm run build -- --outDir dist-cn
+VITE_FRONTEND_SITE=global npm run build -- --outDir dist-global
 ```
+
+每次 Vite 构建只生成一套静态文件；上面两次构建分别把站点标记写入国内站和国际站产物。`publish.sh` 会自动执行这两次构建，并把它们发布到各自的 OSS Bucket。国内站的 OSS 配置必须显式提供，国际站沿用现有香港 OSS 默认配置：
+
+```bash
+CN_OSS_CONFIG="$HOME/.ossutilconfig-openshare-cn" \
+CN_OSS_BUCKET="oss://your-cn-frontend-bucket/" \
+./publish.sh
+```
+
+两个站点默认共用 `https://be.open-share.com/api/v1`；如需调整可传入 `API_BASE_URL`。仅验证双站点构建而不上传时，运行 `BUILD_ONLY=1 ./publish.sh`。
 
 自动化检查：
 
@@ -81,11 +93,11 @@ npm run typecheck
 ## 本地开发说明
 
 - API 基址由 `src/lib/api.ts` 读取 `VITE_API_BASE_URL`，未设置时回退到 `http://localhost:8000/api/v1`。
+- `VITE_FRONTEND_SITE` 用于本地开发或预览域名，可设为 `cn` 或 `global`；正式 `open-share.cn` / `open-share.com` 会直接按 hostname 识别。
 - 本地 GitHub 登录与普通 API 应使用 `localhost`；AtomGit 如要求 IP 形式的 OAuth 回调，可单独通过 `VITE_ATOMGIT_API_BASE_URL=http://127.0.0.1:8000/api/v1` 配置。
 - 开发服务器会把 `/media` 请求代理到 `http://localhost:8000`，用于本地显示后端媒体资源，例如头像和商品图片。
-- 登录页会调用 `/common/region` 判断是否为中国大陆访问者。大陆访问者会看到 AtomGit 登录入口，登录后也会看到提现账号和收货地址相关入口。
-- 在 localhost 开发时，可用 `?is_mainland_cn=1` 强制视为大陆访问者；用 `?is_mainland_cn=0` 清除该覆盖。覆盖值只保存在当前标签页的 `sessionStorage`。
-- access token、refresh token、语言、侧边栏状态和地区检测结果会存储在浏览器本地存储中。
+- 每个 API 请求都会携带 `X-OpenShare-Site` 构建标记；后端在正式域名上仍以浏览器 `Origin` 为准，标记不能覆盖 `.cn` / `.com` 的域名判断。
+- access token、refresh token、语言和侧边栏状态会存储在浏览器本地存储中。
 
 ## 项目结构
 
@@ -103,7 +115,7 @@ npm run typecheck
 │   ├── contexts/                   # AuthProvider 与认证状态
 │   ├── i18n/                       # i18next 初始化和中英文翻译
 │   ├── layouts/                    # AuthLayout 与 AppLayout
-│   ├── lib/                        # API 客户端、重定向、地区检测等工具
+│   ├── lib/                        # API 客户端、重定向、前端站点识别等工具
 │   ├── pages/                      # 路由页面
 │   │   └── insight/                # Insight 数据洞察模块
 │   │       ├── api/                # OpenDigger / leaderboard 数据请求
@@ -133,12 +145,12 @@ npm run typecheck
 
 - `/insight`、`/insight/*`：数据洞察榜单和详情页
 - `/profile`、`/profile/edit`：个人中心和资料编辑
-- `/points`、`/points/transactions`、`/points/withdrawals`、`/points/allocate`：积分钱包、流水、提现和分配
+- `/points`、`/points/transactions`、`/points/allocate`：积分钱包、流水和分配
 - `/shop`、`/shop/:id`、`/redemptions`：积分商城、商品详情和兑换记录
 - `/messages`：消息中心
 - `/talent-reach`：人才触达占位页
 - `/organizations`、`/organizations/create`、`/organizations/:slug`、`/organizations/:slug/members`、`/organizations/:slug/settings`、`/organizations/:slug/transactions`：组织相关页面
-- `/settings/general`、`/settings/addresses`、`/settings/withdrawal-accounts`、`/settings/merge`：设置页面
+- `/settings/general`、`/settings/merge`：当前开放的设置页面
 
 `ProtectedRoute` 会在未登录时跳转到 `/login?redirect=<当前路径>`，登录完成后再回到原目标页。社交登录会通过 `sessionStorage` 暂存 redirect，避免 OAuth 整页跳转丢失参数。
 

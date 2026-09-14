@@ -6,7 +6,6 @@ import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { Loader2, MapPin, Plus, Pencil, Trash2, Star } from 'lucide-react';
 import api, { getApiError } from '@/lib/api';
-import { getIsMainlandCn } from '@/lib/geo';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { Badge } from '@/app/components/ui/badge';
@@ -57,7 +56,6 @@ const phoneRegex = /^1[3-9]\d{9}$/;
 
 export default function AddressesPage() {
   const { t } = useTranslation();
-  const isMainlandCn = getIsMainlandCn();
 
   const addressSchema = z.object({
     receiver_name: z.string().min(1, t('addresses.enterReceiver')),
@@ -172,16 +170,6 @@ export default function AddressesPage() {
       const apiError = getApiError(error);
       toast.error(apiError.message || t('addresses.setDefaultFailed'));
     }
-  }
-
-  if (!isMainlandCn) {
-    return (
-      <div className="mx-auto max-w-2xl py-16 px-4 text-center">
-        <MapPin className="mx-auto size-10 text-muted-foreground mb-3" />
-        <h1 className="text-xl font-semibold mb-2">{t('addresses.title')}</h1>
-        <p className="text-muted-foreground">{t('addresses.regionNotSupported')}</p>
-      </div>
-    );
   }
 
   if (isLoading) {

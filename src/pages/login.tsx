@@ -4,22 +4,21 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Github, Loader2 } from 'lucide-react';
 import { readRedirectFromParams, stashSocialRedirect } from '@/lib/redirect';
-import { storeIsMainlandCn, hasLocalhostOverride } from '@/lib/geo';
-import api from '@/lib/api';
+import { getFrontendSite, socialLoginProvidersForSite } from '@/lib/frontend-site';
 import { getSocialApiBaseUrl } from '@/lib/social-api';
 import { Button } from '@/app/components/ui/button';
 import { AgreementCheckbox } from '@/components/agreement-checkbox';
 
 // 登录页支持的三方登录提供商：仅保留 GitHub 与 AtomGit。
-// 默认仅展示 GitHub；若后端 /common/region 接口判定当前 IP 来自中国大陆，再额外展示 AtomGit。
+// 中国站展示 GitHub 与 AtomGit；国际站仅展示 GitHub。
 // 增减项需同步：
 //   1) backend/accounts/api_v1.py:SOCIAL_PROVIDERS
 //   2) backend/config/settings.py 中对应平台的 KEY/SECRET 环境变量
 //   3) 下方 getProviderDisplayName / getProviderIcon / getProviderLabel / getProviderClassName
 type EnabledSocialProvider = 'github' | 'atomgit';
 
-// 默认仅展示 GitHub；区域检测失败或非中国大陆 IP 时保持此默认。
-const DEFAULT_VISIBLE_PROVIDERS: readonly EnabledSocialProvider[] = ['github'];
+const visibleProviders: readonly EnabledSocialProvider[] =
+  socialLoginProvidersForSite(getFrontendSite());
 
 function AtomGitIcon({ className }: { className?: string }) {
   return (
@@ -39,9 +38,6 @@ export default function LoginPage() {
   const [agreed, setAgreed] = useState(false);
   const [agreementHighlight, setAgreementHighlight] = useState(false);
   const [socialLoading, setSocialLoading] = useState<EnabledSocialProvider | null>(null);
-  // 默认仅显示 GitHub；下方 useEffect 通过后端区域检测决定是否追加 AtomGit。
-  const [visibleProviders, setVisibleProviders] =
-    useState<readonly EnabledSocialProvider[]>(DEFAULT_VISIBLE_PROVIDERS);
 
   // 从 URL 参数读取登录后跳转目标；未提供或不合法时默认 /insight
   const redirectTarget = readRedirectFromParams(searchParams) ?? '/insight';
@@ -53,37 +49,6 @@ export default function LoginPage() {
     };
     window.addEventListener('pageshow', handlePageShow);
     return () => window.removeEventListener('pageshow', handlePageShow);
-  }, []);
-
-  // 后端基于 IP 判断是否为中国大陆访问者；命中时追加展示 AtomGit 入口。
-  // 接口不可用、非中国大陆、或网络错误时均保持默认（仅 GitHub）。
-  // localhost 环境下支持 ?is_mainland_cn=1 参数覆盖（见 geo.ts）。
-  useEffect(() => {
-    // localhost 开发覆盖：直接展示 AtomGit，无需等待后端响应
-    if (hasLocalhostOverride()) {
-      setVisibleProviders(['github', 'atomgit']);
-      storeIsMainlandCn(true);
-      return;
-    }
-
-    let cancelled = false;
-    api
-      .get<{ is_mainland_cn: boolean | null }>('/common/region')
-      .then((res) => {
-        if (cancelled) return;
-        const isMainland = res.data?.is_mainland_cn;
-        // 持久化到 localStorage，登录后其他页面据此决定是否展示提现功能
-        storeIsMainlandCn(isMainland ?? null);
-        if (isMainland === true) {
-          setVisibleProviders(['github', 'atomgit']);
-        }
-      })
-      .catch(() => {
-        // 静默失败：保持默认仅 GitHub
-      });
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   function handleSocialLogin(provider: EnabledSocialProvider) {
@@ -104,7 +69,11 @@ export default function LoginPage() {
     stashSocialRedirect(redirectTarget);
     // 直接跳转后端社交登录入口；后端会重定向到 OAuth 授权页
     // 完成后再跳回前端 /social-callback 用 exchange_code 兑换 JWT
-    window.location.href = `${baseUrl}/auth/social/${provider}/start?redirect_uri=${encodeURIComponent(redirectUri)}`;
+    const query = new URLSearchParams({
+      redirect_uri: redirectUri,
+      frontend_site: getFrontendSite(),
+    });
+    window.location.href = `${baseUrl}/auth/social/${provider}/start?${query.toString()}`;
   }
 
   function getProviderDisplayName(providerId: EnabledSocialProvider) {

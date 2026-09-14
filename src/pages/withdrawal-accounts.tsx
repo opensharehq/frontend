@@ -12,7 +12,6 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import api, { getApiError } from '@/lib/api';
-import { getIsMainlandCn } from '@/lib/geo';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { Badge } from '@/app/components/ui/badge';
@@ -65,7 +64,6 @@ interface WithdrawalAccount {
 
 export default function WithdrawalAccountsPage() {
   const { t } = useTranslation();
-  const isMainlandCn = getIsMainlandCn();
 
   const domesticSchema = z.object({
     real_name: z.string().min(1, t('withdrawalAccounts.fieldRequired')),
@@ -157,16 +155,6 @@ export default function WithdrawalAccountsPage() {
       const apiError = getApiError(error);
       toast.error(apiError.message || t('withdrawalAccounts.deleteFailed'));
     }
-  }
-
-  if (!isMainlandCn) {
-    return (
-      <div className="mx-auto max-w-2xl py-16 px-4 text-center">
-        <Wallet className="mx-auto size-10 text-muted-foreground mb-3" />
-        <h1 className="text-xl font-semibold mb-2">{t('withdrawalAccounts.title')}</h1>
-        <p className="text-muted-foreground">{t('withdrawalAccounts.regionNotSupported')}</p>
-      </div>
-    );
   }
 
   if (isLoading) {

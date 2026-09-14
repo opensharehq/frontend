@@ -572,17 +572,11 @@ export default function ShopItemPage() {
                         <MapPin className="size-4" />
                         {t('shop.shippingAddress')}
                       </Label>
-                      <Button asChild variant="link" size="sm" className="h-auto p-0">
-                        <Link to="/settings/addresses">{t('shop.manageAddress')}</Link>
-                      </Button>
                     </div>
 
                     {addresses.length === 0 ? (
                       <div className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
                         <p>{t('shop.noAddress')}</p>
-                        <Button asChild variant="link" size="sm" className="mt-1">
-                          <Link to="/settings/addresses">{t('shop.addAddress')}</Link>
-                        </Button>
                       </div>
                     ) : (
                       <RadioGroup

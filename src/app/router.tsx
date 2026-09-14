@@ -21,7 +21,6 @@ const ProfilePage = lazy(() => import('@/pages/profile'));
 const ProfileEditPage = lazy(() => import('@/pages/profile-edit'));
 const PointsPage = lazy(() => import('@/pages/points'));
 const TransactionsPage = lazy(() => import('@/pages/transactions'));
-const WithdrawalsPage = lazy(() => import('@/pages/withdrawals'));
 const ShopPage = lazy(() => import('@/pages/shop'));
 const ShopItemPage = lazy(() => import('@/pages/shop-item'));
 const RedemptionsPage = lazy(() => import('@/pages/redemptions'));
@@ -33,8 +32,6 @@ const OrganizationMembersPage = lazy(() => import('@/pages/organization-members'
 const OrganizationSettingsPage = lazy(() => import('@/pages/organization-settings'));
 const OrganizationTransactionsPage = lazy(() => import('@/pages/organization-transactions'));
 const SettingsGeneralPage = lazy(() => import('@/pages/settings-general'));
-const AddressesPage = lazy(() => import('@/pages/addresses'));
-const WithdrawalAccountsPage = lazy(() => import('@/pages/withdrawal-accounts'));
 const AccountMergePage = lazy(() => import('@/pages/account-merge'));
 const PointAllocationPage = lazy(() => import('@/pages/point-allocation'));
 const TalentReachPage = lazy(() => import('@/pages/talent-reach'));
@@ -91,7 +88,7 @@ export const router = createBrowserRouter([
           { path: '/profile/edit', element: lazyElement(<ProfileEditPage />) },
           { path: '/points', element: lazyElement(<PointsPage />) },
           { path: '/points/transactions', element: lazyElement(<TransactionsPage />) },
-          { path: '/points/withdrawals', element: lazyElement(<WithdrawalsPage />) },
+          { path: '/points/withdrawals', element: <Navigate to="/points" replace /> },
           { path: '/points/allocate', element: lazyElement(<PointAllocationPage />) },
           { path: '/shop', element: lazyElement(<ShopPage />) },
           { path: '/shop/:id', element: lazyElement(<ShopItemPage />) },
@@ -110,8 +107,8 @@ export const router = createBrowserRouter([
           { path: '/insight/open-leaderboard', element: lazyElement(<InsightPage />) },
           { path: '/insight/*', element: lazyElement(<InsightDispatcher />) },
           { path: '/settings/general', element: lazyElement(<SettingsGeneralPage />) },
-          { path: '/settings/addresses', element: lazyElement(<AddressesPage />) },
-          { path: '/settings/withdrawal-accounts', element: lazyElement(<WithdrawalAccountsPage />) },
+          { path: '/settings/addresses', element: <Navigate to="/settings/general" replace /> },
+          { path: '/settings/withdrawal-accounts', element: <Navigate to="/settings/general" replace /> },
           { path: '/settings/merge', element: lazyElement(<AccountMergePage />) },
         ],
       },

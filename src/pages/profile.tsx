@@ -24,6 +24,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import api, { getApiError } from '@/lib/api';
+import { getFrontendSite } from '@/lib/frontend-site';
 import { getSocialApiBaseUrl } from '@/lib/social-api';
 import { getLocationLabel } from '@/services/geo-data';
 import { inferDeveloperAvatarUrl } from '@/pages/insight/domain/repoPlatform';
@@ -466,7 +467,10 @@ export default function ProfilePage() {
       toast.error(t('profile.loginExpired'));
       return;
     }
-    const query = new URLSearchParams({ access_token: accessToken }).toString();
+    const query = new URLSearchParams({
+      access_token: accessToken,
+      frontend_site: getFrontendSite(),
+    }).toString();
     window.open(
       `${baseUrl}/auth/social/${provider}/start?${query}`,
       '_blank',

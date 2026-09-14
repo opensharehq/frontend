@@ -2,10 +2,8 @@ import { useEffect, useState, useCallback } from "react";
 import { formatDistanceToNow, format } from "date-fns";
 import { zhCN, enUS } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
 import { Plus, Loader2, Wallet, Banknote, HelpCircle } from "lucide-react";
 import api, { getApiError } from "@/lib/api";
-import { getIsMainlandCn } from "@/lib/geo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
@@ -121,7 +119,6 @@ function statusBadge(status: Withdrawal["status"], t: (key: string) => string) {
 export default function WithdrawalsPage() {
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language === "en" ? enUS : zhCN;
-  const isMainlandCn = getIsMainlandCn();
 
   // Wallet balance
   const [cashBalance, setCashBalance] = useState<number>(0);
@@ -244,17 +241,6 @@ export default function WithdrawalsPage() {
   }
 
   const totalPages = Math.ceil(total / pageSize);
-
-  // 非中国大陆 IP 不支持提现
-  if (!isMainlandCn) {
-    return (
-      <div className="max-w-4xl mx-auto py-16 text-center">
-        <Wallet className="mx-auto size-10 text-muted-foreground mb-3" />
-        <h1 className="text-xl font-semibold mb-2">{t('withdrawals.title')}</h1>
-        <p className="text-muted-foreground">{t('withdrawals.regionNotSupported')}</p>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -453,11 +439,6 @@ export default function WithdrawalsPage() {
                   <p className="text-sm text-muted-foreground mb-2">
                     {t('withdrawals.noAccountTip')}
                   </p>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link to="/settings/withdrawal-accounts">
-                      {t('withdrawals.goAddAccount')}
-                    </Link>
-                  </Button>
                 </div>
               ) : (
                 <RadioGroup

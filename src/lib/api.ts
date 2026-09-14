@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { buildLoginPath, currentRedirectTarget } from '@/lib/redirect';
+import { getFrontendSite } from '@/lib/frontend-site';
 
 interface TokenPair {
   access_token: string;
@@ -8,7 +9,10 @@ interface TokenPair {
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1',
-  headers: { 'Content-Type': 'application/json' },
+  headers: {
+    'Content-Type': 'application/json',
+    'X-OpenShare-Site': getFrontendSite(),
+  },
 });
 
 // 请求拦截器：附加 Bearer token

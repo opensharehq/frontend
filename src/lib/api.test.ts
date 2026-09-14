@@ -1,6 +1,7 @@
 import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import api from './api';
+import { getFrontendSite } from './frontend-site';
 
 function response(config: AxiosRequestConfig, data: unknown): AxiosResponse {
   return {
@@ -53,6 +54,7 @@ describe('API token refresh', () => {
     expect(first.data).toEqual({ ok: true });
     expect(second.data).toEqual({ ok: true });
     expect(refresh).toHaveBeenCalledTimes(1);
+    expect(first.config.headers.get('X-OpenShare-Site')).toBe(getFrontendSite());
     expect(localStorage.getItem('access_token')).toBe('new-access');
     expect(localStorage.getItem('refresh_token')).toBe('new-refresh');
   });

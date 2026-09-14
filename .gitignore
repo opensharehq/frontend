@@ -8,6 +8,8 @@ node_modules/
 
 # Production
 /dist
+/dist-cn
+/dist-global
 /build
 
 # Misc
@@ -78,8 +80,6 @@ storybook-static/
 # Temporary folders
 tmp/
 temp/
-
-publish.sh
 
 .trae
 .vercel

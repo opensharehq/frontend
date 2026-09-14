@@ -3,14 +3,12 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   ArrowRightLeft,
-  ArrowUpRight,
   ShoppingBag,
   ClipboardList,
   Send,
   Loader2,
 } from "lucide-react";
 import api, { getApiError } from "@/lib/api";
-import { getIsMainlandCn } from "@/lib/geo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import {
@@ -29,7 +27,6 @@ export default function PointsPage() {
   const { t } = useTranslation();
   const [balance, setBalance] = useState<PointsBalanceData | null>(null);
   const [loading, setLoading] = useState(true);
-  const isMainlandCn = getIsMainlandCn();
 
   useEffect(() => {
     async function fetchBalance() {
@@ -77,14 +74,6 @@ export default function PointsPage() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
-            {isMainlandCn && (
-              <Button variant="outline" className="min-h-11 flex-1 justify-center sm:min-w-[10rem]" asChild>
-                <Link to="/points/withdrawals">
-                  <ArrowUpRight className="size-4" />
-                  <span>{t('points.withdrawRequest')}</span>
-                </Link>
-              </Button>
-            )}
             <Button variant="outline" className="min-h-11 flex-1 justify-center sm:min-w-[10rem]" asChild>
               <Link to="/shop">
                 <ShoppingBag className="size-4" />

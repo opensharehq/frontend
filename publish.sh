@@ -49,14 +49,15 @@ publish_site() {
 
   echo "Publishing ${label} site to ${bucket} ..."
 
-  # Upload versioned/static files before index.html so the new HTML never points
-  # at assets that have not arrived yet.
+  # Upload non-asset files and the asset tree separately so assets are synced
+  # only once while stale hashed files can still be removed before index.html.
   "${OSSUTIL_BIN}" sync "${output_dir}/" "${bucket}" \
-    --exclude "index.html" --force --job=100 --config-file="${config_file}"
-  "${OSSUTIL_BIN}" cp "${output_dir}/index.html" "${bucket}index.html" \
-    --force --config-file="${config_file}"
+    --exclude "index.html" --exclude "assets/*" \
+    --force --job=100 --config-file="${config_file}"
   "${OSSUTIL_BIN}" sync "${output_dir}/assets/" "${bucket}assets/" \
     --delete --force --job=100 --config-file="${config_file}"
+  "${OSSUTIL_BIN}" cp "${output_dir}/index.html" "${bucket}index.html" \
+    --force --config-file="${config_file}"
 }
 
 if [[ "${BUILD_ONLY}" != "1" ]]; then

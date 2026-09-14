@@ -8,7 +8,10 @@ const SITE_HOSTS: Record<string, FrontendSite> = {
 };
 
 function configuredSite(): FrontendSite | null {
-  const value = import.meta.env.VITE_FRONTEND_SITE?.trim().toLowerCase();
+  const configuredValue = import.meta.env.VITE_FRONTEND_SITE;
+  if (typeof configuredValue !== 'string') return null;
+
+  const value = configuredValue.trim().toLowerCase();
   return value === 'cn' || value === 'global' ? value : null;
 }
 

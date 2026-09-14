@@ -54,6 +54,11 @@ describe('API token refresh', () => {
     expect(first.data).toEqual({ ok: true });
     expect(second.data).toEqual({ ok: true });
     expect(refresh).toHaveBeenCalledTimes(1);
+    expect(refresh).toHaveBeenCalledWith(
+      `${api.defaults.baseURL}/auth/refresh`,
+      { refresh_token: 'current-refresh' },
+      { headers: { 'X-OpenShare-Site': getFrontendSite() } },
+    );
     expect(first.config.headers.get('X-OpenShare-Site')).toBe(getFrontendSite());
     expect(localStorage.getItem('access_token')).toBe('new-access');
     expect(localStorage.getItem('refresh_token')).toBe('new-refresh');

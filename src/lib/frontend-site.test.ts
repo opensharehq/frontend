@@ -24,6 +24,12 @@ describe('frontend site resolution', () => {
     expect(getFrontendSite('preview.example')).toBe('global');
   });
 
+  it('defaults an unknown hostname to global when the build setting is unset', () => {
+    vi.stubEnv('VITE_FRONTEND_SITE', undefined);
+
+    expect(getFrontendSite('localhost')).toBe('global');
+  });
+
   it('enables AtomGit only for the China frontend', () => {
     expect(socialLoginProvidersForSite('cn')).toEqual(['github', 'atomgit']);
     expect(socialLoginProvidersForSite('global')).toEqual(['github']);

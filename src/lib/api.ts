@@ -34,9 +34,11 @@ function refreshTokens(): Promise<TokenPair> {
     if (!refreshToken) return Promise.reject(new Error('No refresh token'));
 
     refreshPromise = axios
-      .post<TokenPair>(`${api.defaults.baseURL}/auth/refresh`, {
-        refresh_token: refreshToken,
-      })
+      .post<TokenPair>(
+        `${api.defaults.baseURL}/auth/refresh`,
+        { refresh_token: refreshToken },
+        { headers: { 'X-OpenShare-Site': getFrontendSite() } },
+      )
       .then(({ data }) => {
         localStorage.setItem('access_token', data.access_token);
         localStorage.setItem('refresh_token', data.refresh_token);

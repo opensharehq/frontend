@@ -1,11 +1,12 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { BarChart3, Menu, Radar, Wallet } from "lucide-react";
+import { BarChart3, Globe2, Menu, Radar, Wallet } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/app/components/ui/button";
 import { LanguageToggle } from "@/app/components/language-toggle";
 import { ThemeToggle } from "@/app/components/theme-toggle";
 import { useLanguage } from "@/app/contexts/language-context";
 import { useAuth } from "@/contexts/auth-context";
+import { GLOBAL_FRONTEND_URL, isCnFrontend } from "@/lib/frontend-site";
 
 const MobileMenuSheet = lazy(() =>
   import("@/app/components/mobile-menu-sheet").then((module) => ({
@@ -16,6 +17,7 @@ const MobileMenuSheet = lazy(() =>
 export function Header() {
   const { t } = useLanguage();
   const { user, isAuthenticated } = useAuth();
+  const showInternationalSiteEntry = isCnFrontend();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const hasOpenedMobileMenuRef = useRef(false);
@@ -64,6 +66,14 @@ export function Header() {
           </nav>
 
           <div className="flex items-center gap-2">
+            {showInternationalSiteEntry && (
+              <Button variant="outline" className="hidden md:inline-flex" asChild>
+                <a href={GLOBAL_FRONTEND_URL}>
+                  <Globe2 className="size-4" aria-hidden="true" />
+                  {t("nav.internationalSite")}
+                </a>
+              </Button>
+            )}
             {isAuthenticated ? (
               <Link
                 to="/profile"
@@ -99,6 +109,12 @@ export function Header() {
                   menuLabel={t("header.menu")}
                   loginLabel={t("header.login")}
                   profileLabel={t("nav.profile")}
+                  internationalSiteLabel={
+                    showInternationalSiteEntry ? t("nav.internationalSite") : undefined
+                  }
+                  internationalSiteUrl={
+                    showInternationalSiteEntry ? GLOBAL_FRONTEND_URL : undefined
+                  }
                   isAuthenticated={isAuthenticated}
                   username={user?.username}
                   items={mobileNavItems}

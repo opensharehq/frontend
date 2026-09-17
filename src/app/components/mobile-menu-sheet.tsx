@@ -1,4 +1,4 @@
-import { LogIn, User, type LucideIcon } from "lucide-react";
+import { Globe2, LogIn, User, type LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/app/components/ui/button";
 import {
@@ -21,6 +21,8 @@ interface MobileMenuSheetProps {
   menuLabel: string;
   loginLabel: string;
   profileLabel: string;
+  internationalSiteLabel?: string;
+  internationalSiteUrl?: string;
   isAuthenticated: boolean;
   username?: string;
   items: MobileMenuItem[];
@@ -32,6 +34,8 @@ export function MobileMenuSheet({
   menuLabel,
   loginLabel,
   profileLabel,
+  internationalSiteLabel,
+  internationalSiteUrl,
   isAuthenticated,
   username,
   items,
@@ -66,7 +70,18 @@ export function MobileMenuSheet({
           </ul>
         </nav>
 
-        <div className="mt-auto border-t border-border px-3 pt-4">
+        <div className="mt-auto space-y-2 border-t border-border px-3 pt-4">
+          {internationalSiteLabel && internationalSiteUrl && (
+            <SheetClose asChild>
+              <a
+                href={internationalSiteUrl}
+                className="flex min-h-11 items-center gap-3 rounded-lg border border-border bg-card/70 px-3 py-2 text-sm font-medium text-foreground outline-none transition-colors hover:bg-secondary/70 focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <Globe2 className="size-4" strokeWidth={1.5} aria-hidden="true" />
+                <span>{internationalSiteLabel}</span>
+              </a>
+            </SheetClose>
+          )}
           {isAuthenticated ? (
             <SheetClose asChild>
               <Link

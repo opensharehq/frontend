@@ -1,5 +1,7 @@
 export type FrontendSite = 'cn' | 'global';
 
+export const GLOBAL_FRONTEND_URL = 'https://open-share.com';
+
 const SITE_HOSTS: Record<string, FrontendSite> = {
   'open-share.cn': 'cn',
   'www.open-share.cn': 'cn',

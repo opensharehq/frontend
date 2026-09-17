@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   getFrontendSite,
+  isCnFrontend,
   socialLoginProvidersForSite,
 } from './frontend-site';
 
@@ -14,6 +15,13 @@ describe('frontend site resolution', () => {
     expect(getFrontendSite('www.open-share.cn')).toBe('cn');
     expect(getFrontendSite('open-share.com')).toBe('global');
     expect(getFrontendSite('www.open-share.com')).toBe('global');
+  });
+
+  it('shows China-only features only on the China frontend', () => {
+    expect(isCnFrontend('open-share.cn')).toBe(true);
+    expect(isCnFrontend('www.open-share.cn')).toBe(true);
+    expect(isCnFrontend('open-share.com')).toBe(false);
+    expect(isCnFrontend('www.open-share.com')).toBe(false);
   });
 
   it('uses the build setting for local development and fails safe otherwise', () => {

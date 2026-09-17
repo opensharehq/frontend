@@ -17,8 +17,10 @@ import {
   ChevronLeft,
   ChevronRight,
   BarChart3,
+  Globe2,
   Radar,
 } from 'lucide-react';
+import { GLOBAL_FRONTEND_URL, isCnFrontend } from '@/lib/frontend-site';
 
 interface NavItem {
   labelKey: string;
@@ -66,6 +68,7 @@ export function AppLayout({ publicMode = false }: AppLayoutProps) {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
+  const showInternationalSiteEntry = isCnFrontend();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -288,7 +291,23 @@ export function AppLayout({ publicMode = false }: AppLayoutProps) {
         </ul>
       </nav>
 
-      <div className="border-t border-sidebar-border/70 px-3 py-3">
+      <div className="space-y-1.5 border-t border-sidebar-border/70 px-3 py-3">
+        {showInternationalSiteEntry && (
+          <a
+            href={GLOBAL_FRONTEND_URL}
+            onClick={() => setSidebarOpen(false)}
+            className={navItemClass(false, collapsed)}
+            aria-label={collapsed ? t('nav.internationalSite') : undefined}
+            title={collapsed ? t('nav.internationalSite') : undefined}
+          >
+            <span className={`flex min-w-0 flex-1 items-center gap-3 ${collapsed ? 'justify-center' : ''}`}>
+              <span className={navIconClass(false)}>
+                <Globe2 className="size-4" strokeWidth={1.5} aria-hidden="true" />
+              </span>
+              {!collapsed && <span className="truncate">{t('nav.internationalSite')}</span>}
+            </span>
+          </a>
+        )}
         {isAuthenticated ? (
           <button
             type="button"

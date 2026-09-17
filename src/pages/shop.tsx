@@ -9,6 +9,7 @@ import { canAffordRedemption } from '@/lib/redemption-payment';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Badge } from '@/app/components/ui/badge';
 import { Skeleton } from '@/app/components/ui/skeleton';
+import { TierDiscountRibbon } from '@/app/components/tier-discount-ribbon';
 import { toast } from 'sonner';
 
 interface AllowedTag {
@@ -25,6 +26,10 @@ interface ShopItem {
   description_zh: string;
   description_en: string;
   cost: number;
+  original_cost: number;
+  discount_tier: string | null;
+  discount_tier_year: number | null;
+  discount_multiplier: number;
   stock: number | null;
   priority?: number | null;
   image_card_url: string | null;
@@ -158,6 +163,11 @@ export default function ShopPage() {
             return (
               <Link key={item.id} to={`/shop/${item.id}`} className="block">
               <Card className="overflow-hidden flex flex-col h-full hover:ring-2 hover:ring-primary/20 transition-shadow">
+                <TierDiscountRibbon
+                  tier={item.discount_tier}
+                  tierYear={item.discount_tier_year}
+                  multiplier={item.discount_multiplier}
+                />
                 {/* 商品图片 */}
                 <div className="aspect-[2/1] bg-muted flex items-center justify-center overflow-hidden">
                   {item.image_card_url ? (
@@ -183,9 +193,16 @@ export default function ShopPage() {
 
                   {/* 积分和库存 */}
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-lg font-bold text-primary">
-                      {item.cost.toLocaleString()} {t('shop.points')}
-                    </span>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-lg font-bold text-primary">
+                        {item.cost.toLocaleString()} {t('shop.points')}
+                      </span>
+                      {item.original_cost > item.cost && (
+                        <span className="text-xs text-muted-foreground line-through">
+                          {item.original_cost.toLocaleString()}
+                        </span>
+                      )}
+                    </div>
                     <Badge variant={stockInfo.variant}>{stockInfo.text}</Badge>
                   </div>
 

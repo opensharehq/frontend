@@ -25,6 +25,7 @@ import {
   AlertDialogAction,
 } from '@/app/components/ui/alert-dialog';
 import { Skeleton } from '@/app/components/ui/skeleton';
+import { TierDiscountRibbon } from '@/app/components/tier-discount-ribbon';
 import { toast } from 'sonner';
 
 interface AllowedTag {
@@ -61,6 +62,10 @@ interface ShopItemDetail {
   description_zh: string;
   description_en: string;
   cost: number;
+  original_cost: number;
+  discount_tier: string | null;
+  discount_tier_year: number | null;
+  discount_multiplier: number;
   stock: number | null;
   image_card_url: string | null;
   image_detail_url: string | null;
@@ -183,6 +188,7 @@ export default function ShopItemPage() {
         tag_slug: string | null;
         use_untagged_gift: boolean;
         use_cash: boolean;
+        expected_points_cost: number;
       } = {
         item_id: item.id,
         lang: i18n.language === 'zh' ? 'zh' : 'en',
@@ -190,6 +196,7 @@ export default function ShopItemPage() {
         tag_slug: null,
         use_untagged_gift: useUntaggedGift,
         use_cash: useCash,
+        expected_points_cost: item.cost,
       };
       if (selectedPayment) {
         const [type, ...tagParts] = selectedPayment.split(':');
@@ -205,7 +212,17 @@ export default function ShopItemPage() {
       toast.success(t('shop.redeemSuccess').replace('！', ''));
     } catch (err) {
       const apiErr = getApiError(err);
-      toast.error(apiErr.message || t('shop.redeemFailed'));
+      if (apiErr.code === 'price_changed') {
+        toast.error(t('shop.priceChanged'));
+        try {
+          const refreshed = await api.get<ShopItemDetail>(`/shop/items/${id}`);
+          setItem(refreshed.data);
+        } catch {
+          // Keep the existing item visible; the user can retry or navigate back.
+        }
+      } else {
+        toast.error(apiErr.message || t('shop.redeemFailed'));
+      }
     } finally {
       setRedeeming(false);
     }
@@ -382,7 +399,12 @@ export default function ShopItemPage() {
       <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-10">
         {/* 左列：商品大图 + 详情描述 */}
         <div className="space-y-6">
-          <div className="aspect-square w-[70%] max-w-xl bg-muted rounded-xl flex items-center justify-center overflow-hidden mx-auto">
+          <div className="relative aspect-square w-[70%] max-w-xl bg-muted rounded-xl flex items-center justify-center overflow-hidden mx-auto">
+            <TierDiscountRibbon
+              tier={item.discount_tier}
+              tierYear={item.discount_tier_year}
+              multiplier={item.discount_multiplier}
+            />
             {item.image_detail_url ? (
               <img
                 src={item.image_detail_url}
@@ -406,9 +428,16 @@ export default function ShopItemPage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-4">
               <span className="text-sm text-muted-foreground">{t('shop.requiredPoints')}</span>
-              <span className="text-2xl font-bold text-primary">
-                {item.cost.toLocaleString()}
-              </span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-primary">
+                  {item.cost.toLocaleString()}
+                </span>
+                {item.original_cost > item.cost && (
+                  <span className="text-sm text-muted-foreground line-through">
+                    {item.original_cost.toLocaleString()}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="flex items-center justify-between gap-4">
               <span className="text-sm text-muted-foreground">{t('shop.stockStatus')}</span>

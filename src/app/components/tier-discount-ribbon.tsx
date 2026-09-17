@@ -19,8 +19,8 @@ export function TierDiscountRibbon({
   const { t } = useTranslation();
   if (!tier || multiplier >= 1) return null;
 
-  const percent = Math.round((1 - multiplier) * 100);
   const discount = Math.round(multiplier * 100);
+  const percent = 100 - discount;
   const tierLabel = t('shop.discountTooltipTier', {
     tier,
     year: tierYear ?? '—',
@@ -34,8 +34,9 @@ export function TierDiscountRibbon({
     <Tooltip>
       <TooltipTrigger asChild>
         <span
-          className="absolute -right-10 top-5 z-20 w-36 rotate-45 cursor-help bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 py-1 text-center text-xs font-bold tracking-wide text-white shadow-md"
+          className="absolute -right-10 top-5 z-20 w-36 rotate-45 cursor-help bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 py-1 text-center text-xs font-bold tracking-wide text-white shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-orange-500"
           aria-label={`${tierLabel}；${discountLabel}`}
+          tabIndex={0}
         >
           {t('shop.discountRibbon', { percent })}
         </span>

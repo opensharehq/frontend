@@ -80,26 +80,24 @@ export function Footer() {
         </div>
 
         <div className="border-t border-border pt-8">
-          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <p className="text-sm text-muted-foreground">
+          <div className="flex flex-col items-center gap-4 md:flex-row">
+            <p className="text-sm text-muted-foreground md:flex-1">
               {t("footer.copyright")}
             </p>
-            <p className="text-sm text-muted-foreground">
-              {t("footer.slogan")}
-            </p>
-          </div>
-          {showIcpRecord && (
-            <p className="mt-4 text-center text-sm text-muted-foreground">
+            {showIcpRecord && (
               <a
                 href={ICP_RECORD_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="transition-colors hover:text-primary"
+                className="text-sm text-muted-foreground transition-colors hover:text-primary"
               >
                 {ICP_RECORD}
               </a>
+            )}
+            <p className="text-sm text-muted-foreground md:flex-1 md:text-right">
+              {t("footer.slogan")}
             </p>
-          )}
+          </div>
         </div>
       </div>
     </footer>

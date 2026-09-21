@@ -17,10 +17,10 @@ describe('Footer', () => {
 
     render(<Footer />);
 
-    expect(screen.getByRole('link', { name: '浙ICP备2026079381号' })).toHaveAttribute(
-      'href',
-      'https://beian.miit.gov.cn/',
-    );
+    const recordLink = screen.getByRole('link', { name: '浙ICP备2026079381号' });
+    expect(recordLink).toHaveAttribute('href', 'https://beian.miit.gov.cn/');
+    expect(recordLink.parentElement).toContainElement(screen.getByText('footer.copyright'));
+    expect(recordLink.parentElement).toContainElement(screen.getByText('footer.slogan'));
   });
 
   it('does not show the ICP record on the global frontend', () => {

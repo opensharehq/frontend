@@ -1,8 +1,13 @@
 import { Github, Mail } from "lucide-react";
 import { useLanguage } from "@/app/contexts/language-context";
+import { isCnFrontend } from "@/lib/frontend-site";
+
+const ICP_RECORD = "浙ICP备2026079381号";
+const ICP_RECORD_URL = "https://beian.miit.gov.cn/";
 
 export function Footer() {
   const { t } = useLanguage();
+  const showIcpRecord = isCnFrontend();
   const productLinks = [
     { label: t("footer.products.insight"), href: "/insight" },
     { label: t("footer.products.ads"), href: "/talent-reach" },
@@ -83,6 +88,18 @@ export function Footer() {
               {t("footer.slogan")}
             </p>
           </div>
+          {showIcpRecord && (
+            <p className="mt-4 text-center text-sm text-muted-foreground">
+              <a
+                href={ICP_RECORD_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition-colors hover:text-primary"
+              >
+                {ICP_RECORD}
+              </a>
+            </p>
+          )}
         </div>
       </div>
     </footer>

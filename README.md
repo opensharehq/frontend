@@ -66,11 +66,13 @@ Vite 默认会启动在 `http://localhost:5173`。如果端口被占用，以终
 生产构建：
 
 ```bash
-VITE_FRONTEND_SITE=cn npm run build -- --outDir dist-cn
-VITE_FRONTEND_SITE=global npm run build -- --outDir dist-global
+BAIDU_ANALYTICS_ENABLED=true VITE_FRONTEND_SITE=cn npm run build -- --outDir dist-cn
+BAIDU_ANALYTICS_ENABLED=true VITE_FRONTEND_SITE=global npm run build -- --outDir dist-global
 ```
 
 每次 Vite 构建只生成一套静态文件；上面两次构建分别把站点标记写入国内站和国际站产物。生产发布时应将 `dist-cn` 和 `dist-global` 分别上传到对应站点。两个站点共用后端时，两次构建应设置相同的 `VITE_API_BASE_URL`。
+
+百度统计脚本只在 `vite build`、`BAIDU_ANALYTICS_ENABLED=true` 且 `VITE_FRONTEND_SITE` 明确为 `cn` 或 `global` 时注入 `index.html`；`npm run dev`、测试、普通本地构建和未指定站点的构建都不会加载百度统计。中国站与国际站分别使用各自的跟踪 ID。
 
 自动化检查：
 

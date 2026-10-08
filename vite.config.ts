@@ -1,7 +1,9 @@
 import { defineConfig } from 'vitest/config'
+import { loadEnv } from 'vite'
 import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
+import { createBaiduAnalyticsPlugin } from './src/build/baidu-analytics'
 
 export default defineConfig({
   test: {
@@ -10,6 +12,7 @@ export default defineConfig({
     setupFiles: './src/test/setup.ts',
   },
   plugins: [
+    createBaiduAnalyticsPlugin((mode, root) => loadEnv(mode, root, '')),
     // The React and Tailwind plugins are both required for Make, even if
     // Tailwind is not being actively used – do not remove them
     react(),

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { fetchItemMeta, fetchRepoTrendData } from './api/openDiggerTrend';
 import { fetchRepoCommunityOpenRankDetails } from './api/communityOpenRankDetails';
-import { getLabelDetailPath, getDeveloperDetailPath } from './domain/routes';
+import { getLabelDetailPath, getDeveloperDetailPath, withSearchParams } from './domain/routes';
 import { getRepoUrlByPlatform, normalizeRepoPlatform } from './domain/repoPlatform';
 import { normalizeInsightLang } from './domain/lang';
 import { CommunityDeveloperOpenRank } from './components/CommunityDeveloperOpenRank';
@@ -48,6 +48,7 @@ export default function RepoDetailPage() {
   const { platform, owner, repo } = useParams<{ platform: string; owner: string; repo: string }>();
   const repoName = `${owner}/${repo}`;
   const navigate = useNavigate();
+  const { search } = useLocation();
   const { t, i18n } = useTranslation();
   const lang = normalizeInsightLang(i18n.language);
 
@@ -176,7 +177,7 @@ export default function RepoDetailPage() {
                   key={idx}
                   type="button"
                   className="insight-detail-hero__badge"
-                  onClick={() => navigate(getLabelDetailPath(label.id!))}
+                  onClick={() => navigate(withSearchParams(getLabelDetailPath(label.id!), search))}
                 >
                   {text}
                 </button>
@@ -279,7 +280,7 @@ export default function RepoDetailPage() {
               const platform = devItem.platform || 'github';
               const login = (devItem.login ?? devItem.name ?? '').split('/')[0]?.trim() || '';
               if (login) {
-                navigate(getDeveloperDetailPath(platform, login));
+                navigate(withSearchParams(getDeveloperDetailPath(platform, login), search));
               }
             }}
             lang={lang}

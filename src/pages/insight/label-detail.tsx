@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { fetchItemMeta, fetchLabelTrendData } from './api/openDiggerTrend';
 import { fetchCommunityOpenRankDetails } from './api/communityOpenRankDetails';
-import { getLabelDetailPath, getDeveloperDetailPath } from './domain/routes';
+import { getLabelDetailPath, getDeveloperDetailPath, withSearchParams } from './domain/routes';
 import { CommunityDeveloperOpenRank } from './components/CommunityDeveloperOpenRank';
 import { LeaderboardAvatar } from './components/LeaderboardAvatar';
 import { RepoPlatformIcon } from './components/RepoPlatformIcon';
@@ -72,6 +72,7 @@ export default function LabelDetailPage() {
   // after `labels/` (e.g. `labels/companies/huawei/ascend` -> `companies/huawei/ascend`).
   const labelId = rawLabelId.replace(/^labels\//, '');
   const navigate = useNavigate();
+  const { search } = useLocation();
   const { t, i18n } = useTranslation();
   const lang = normalizeInsightLang(i18n.language);
 
@@ -290,7 +291,7 @@ export default function LabelDetailPage() {
                   type="button"
                   className="insight-detail-hero__badge"
                   title={t('insight.detailMetaLabelViewDetails')}
-                  onClick={() => navigate(getLabelDetailPath(l.id || ''))}
+                  onClick={() => navigate(withSearchParams(getLabelDetailPath(l.id || ''), search))}
                 >
                   {text}
                 </button>
@@ -417,7 +418,7 @@ export default function LabelDetailPage() {
               const platform = devItem.platform || 'github';
               const login = (devItem.login ?? devItem.name ?? '').split('/')[0]?.trim() || '';
               if (login) {
-                navigate(getDeveloperDetailPath(platform, login));
+                navigate(withSearchParams(getDeveloperDetailPath(platform, login), search));
               }
             }}
             lang={lang}

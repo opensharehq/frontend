@@ -23,11 +23,9 @@ type Props = {
   searchKeyword: string;
   onScopeChange: (v: string) => void;
   onUnitChange: (v: string) => void;
-  onTimeTypeChange: (v: 'month' | 'year') => void;
-  onTimeValueChange: (v: string) => void;
+  onTimeChange: (timeType: 'month' | 'year', timeValue: string) => void;
   onSearchChange: (v: string) => void;
   onSearchClear: () => void;
-  onTimeCommit: () => void;
   filterCollapsed: boolean;
   onToggleCollapse: () => void;
   paginationSlot: ReactNode;
@@ -42,11 +40,9 @@ export function FilterPanel({
   searchKeyword,
   onScopeChange,
   onUnitChange,
-  onTimeTypeChange,
-  onTimeValueChange,
+  onTimeChange,
   onSearchChange,
   onSearchClear,
-  onTimeCommit,
   filterCollapsed,
   onToggleCollapse,
   paginationSlot,
@@ -172,9 +168,7 @@ export function FilterPanel({
                 className={`detail-trend-toggle flex-1 rounded-md px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors ${timeType === 'month' ? 'active' : ''}`}
                 onClick={() => {
                   if (timeType === 'month') return;
-                  onTimeTypeChange('month');
-                  onTimeValueChange(computeInitialTimeValue('month', meta, timeValue));
-                  onTimeCommit();
+                  onTimeChange('month', computeInitialTimeValue('month', meta, timeValue));
                 }}
               >
                 {t('insight.byMonth')}
@@ -186,9 +180,7 @@ export function FilterPanel({
                 className={`detail-trend-toggle flex-1 rounded-md px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors ${timeType === 'year' ? 'active' : ''}`}
                 onClick={() => {
                   if (timeType === 'year') return;
-                  onTimeTypeChange('year');
-                  onTimeValueChange(computeInitialTimeValue('year', meta, timeValue));
-                  onTimeCommit();
+                  onTimeChange('year', computeInitialTimeValue('year', meta, timeValue));
                 }}
               >
                 {t('insight.byYear')}
@@ -202,8 +194,7 @@ export function FilterPanel({
               timeValue={timeValue}
               lang={lang}
               t={t}
-              onValueChange={onTimeValueChange}
-              onCommit={onTimeCommit}
+              onValueChange={(value) => onTimeChange(timeType, value)}
             />
           </div>
           <div>

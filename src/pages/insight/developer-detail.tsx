@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useLocation, useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Icon } from '@iconify/react/offline';
 import { HelpCircle } from 'lucide-react';
@@ -159,6 +159,7 @@ function TierBadge({ tier }: { tier: TierLabel }) {
 
 export default function DeveloperDetailPage() {
   const { platform = 'github', login = '' } = useParams<{ platform: string; login: string }>();
+  const { search } = useLocation();
   const { t, i18n } = useTranslation();
   const lang = normalizeInsightLang(i18n.language);
 
@@ -247,7 +248,7 @@ export default function DeveloperDetailPage() {
         <div className="flex flex-col items-center justify-center gap-4 py-16 text-muted-foreground">
           <Icon icon="mdi:database-off-outline" className="text-4xl" aria-hidden />
           <p className="text-center px-4">{t('insight.detailUserDataMissing')}</p>
-          <Link to={getInsightHomePath()} className="mt-2 text-sm text-primary hover:underline">
+          <Link to={getInsightHomePath(search)} className="mt-2 text-sm text-primary hover:underline">
             {t('insight.developerDetailBackToInsight')}
           </Link>
         </div>

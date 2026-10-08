@@ -1,12 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import './icons/registerMdiOffline';
 import { fetchLeaderboardData, fetchLeaderboardMeta } from './api/openLeaderboard';
 import { buildDataUrl, getFilteredLeaderboardData, ITEMS_PER_PAGE, leaderboardItemKey } from './domain/leaderboard';
-import { computeInitialTimeValue } from './domain/timeRange';
-import { defaultScopeValue, defaultUnitValue, filterGroupTypesForUnitDropdown } from './domain/meta';
 import { formatUpdateTime } from './domain/format';
 import { normalizeInsightLang } from './domain/lang';
+import {
+  hasCanonicalLeaderboardFilters,
+  resolveLeaderboardFilters,
+  type LeaderboardFilters,
+  writeLeaderboardFilters,
+} from './domain/leaderboardFilters';
 import type { LeaderboardItem, LeaderboardMeta } from './types/api';
 import { FilterPanel } from './components/FilterPanel';
 import { SiteSearchBox } from '@/app/components/site-search-box';
@@ -16,22 +21,46 @@ import { PaginationControl } from './components/PaginationControl';
 export default function InsightPage() {
   const { t, i18n } = useTranslation();
   const lang = normalizeInsightLang(i18n.language);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [meta, setMeta] = useState<LeaderboardMeta | null>(null);
   const [metaError, setMetaError] = useState<string | null>(null);
   const [filtersReady, setFiltersReady] = useState(false);
-  const [scopeValue, setScopeValue] = useState('');
-  const [unitValue, setUnitValue] = useState('');
-  const [timeType, setTimeType] = useState<'month' | 'year'>('month');
-  const [timeValue, setTimeValue] = useState('');
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardItem[]>([]);
   const [boardLoading, setBoardLoading] = useState(false);
   const [boardError, setBoardError] = useState<string | null>(null);
+  const [loadedBoardKey, setLoadedBoardKey] = useState<string | null>(null);
   const [filterCollapsed, setFilterCollapsed] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const leaderboardRowsRef = useRef<HTMLDivElement>(null);
+
+  const filters = useMemo<LeaderboardFilters>(() => {
+    if (meta) return resolveLeaderboardFilters(searchParams, meta);
+    return {
+      scope: '',
+      unit: '',
+      timeType: 'month',
+      time: '',
+      search: searchParams.get('search') ?? '',
+      page: 1,
+    };
+  }, [meta, searchParams]);
+  const {
+    scope: scopeValue,
+    unit: unitValue,
+    timeType,
+    time: timeValue,
+    search: searchKeyword,
+    page: currentPage,
+  } = filters;
+
+  const updateFilters = useCallback((
+    patch: Partial<LeaderboardFilters>,
+    options?: { replace?: boolean },
+  ) => {
+    const nextFilters = { ...filters, ...patch };
+    setSearchParams(writeLeaderboardFilters(searchParams, nextFilters), options);
+  }, [filters, searchParams, setSearchParams]);
 
   // Fetch meta on mount
   useEffect(() => {
@@ -40,10 +69,6 @@ export default function InsightPage() {
       .then((m) => {
         if (cancelled) return;
         setMeta(m);
-        const filteredUnits = filterGroupTypesForUnitDropdown(m.groupTypes);
-        setScopeValue(defaultScopeValue(m.scopes, null));
-        setUnitValue(defaultUnitValue(filteredUnits, null));
-        setTimeValue(computeInitialTimeValue('month', m, ''));
         setFiltersReady(true);
         setMetaError(null);
       })
@@ -55,6 +80,15 @@ export default function InsightPage() {
     };
   }, [reloadKey]);
 
+  // Keep every filter control represented in the URL, including defaults.
+  // Invalid or localized option values are replaced with their canonical form.
+  useEffect(() => {
+    if (!filtersReady || !meta || hasCanonicalLeaderboardFilters(searchParams, filters)) return;
+    setSearchParams(writeLeaderboardFilters(searchParams, filters), { replace: true });
+  }, [filters, filtersReady, meta, searchParams, setSearchParams]);
+
+  const boardKey = `${scopeValue}\u0000${unitValue}\u0000${timeType}\u0000${timeValue}\u0000${reloadKey}`;
+
   // Fetch leaderboard data when filters change
   useEffect(() => {
     if (!filtersReady || !scopeValue || !unitValue || !timeValue) return;
@@ -63,11 +97,12 @@ export default function InsightPage() {
     let cancelled = false;
     setBoardLoading(true);
     setBoardError(null);
+    setLoadedBoardKey(null);
     void fetchLeaderboardData(url)
       .then((data) => {
         if (cancelled) return;
         setLeaderboardData(data);
-        setCurrentPage(1);
+        setLoadedBoardKey(boardKey);
         setBoardLoading(false);
       })
       .catch((e: Error) => {
@@ -78,7 +113,7 @@ export default function InsightPage() {
     return () => {
       cancelled = true;
     };
-  }, [filtersReady, scopeValue, unitValue, timeType, timeValue, reloadKey]);
+  }, [boardKey, filtersReady, scopeValue, unitValue, timeType, timeValue]);
 
   const filteredLeaderboardData = useMemo(
     () => getFilteredLeaderboardData(leaderboardData, searchKeyword),
@@ -86,6 +121,14 @@ export default function InsightPage() {
   );
   const filteredCount = filteredLeaderboardData.length;
   const totalPages = Math.ceil(filteredCount / ITEMS_PER_PAGE);
+
+  useEffect(() => {
+    if (loadedBoardKey !== boardKey || boardLoading || boardError) return;
+    const lastPage = Math.max(totalPages, 1);
+    if (currentPage <= lastPage) return;
+    updateFilters({ page: lastPage }, { replace: true });
+  }, [boardError, boardKey, boardLoading, currentPage, loadedBoardKey, totalPages, updateFilters]);
+
   const currentPageData = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredLeaderboardData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
@@ -113,16 +156,15 @@ export default function InsightPage() {
   const handlePageChange = useCallback(
     (p: number) => {
       if (p < 1 || p > totalPages) return;
-      setCurrentPage(p);
+      updateFilters({ page: p });
       requestAnimationFrame(scrollToLeaderboardRows);
     },
-    [totalPages, scrollToLeaderboardRows],
+    [totalPages, scrollToLeaderboardRows, updateFilters],
   );
 
-  const commitFilterChange = useCallback(() => {
-    setSearchKeyword('');
-    setCurrentPage(1);
-  }, []);
+  const commitFilterChange = useCallback((patch: Partial<LeaderboardFilters>) => {
+    updateFilters({ ...patch, search: '', page: 1 });
+  }, [updateFilters]);
 
   const retryInsightData = useCallback(() => {
     setMetaError(null);
@@ -131,12 +173,13 @@ export default function InsightPage() {
   }, []);
 
   const updateTimeLabel = formatUpdateTime(meta?.updatedAt, lang);
+  const detailSearch = writeLeaderboardFilters(searchParams, filters).toString();
 
   return (
     <div className="insight-layout-v1">
       <div className="insight-v1-header">
         {filtersReady && meta && !metaError ? (
-          <SiteSearchBox variant="insight" />
+          <SiteSearchBox variant="insight" navigationSearch={detailSearch} />
         ) : null}
       </div>
       <div className={`insight-merged insight-merged-console ${filterCollapsed ? 'insight-merged-console--filters-collapsed' : ''}`}>
@@ -159,9 +202,9 @@ export default function InsightPage() {
             error={metaError || boardError}
             onRetry={retryInsightData}
             onClearSearch={() => {
-              setSearchKeyword('');
-              setCurrentPage(1);
+              updateFilters({ search: '', page: 1 });
             }}
+            detailSearch={detailSearch}
           />
         </section>
         <aside className="insight-console-panel" aria-label={t('insight.filterConditions')}>
@@ -173,24 +216,20 @@ export default function InsightPage() {
             timeValue={timeValue}
             searchKeyword={searchKeyword}
             onScopeChange={(v) => {
-              setScopeValue(v);
-              commitFilterChange();
+              commitFilterChange({ scope: v });
             }}
             onUnitChange={(v) => {
-              setUnitValue(v);
-              commitFilterChange();
+              commitFilterChange({ unit: v });
             }}
-            onTimeTypeChange={setTimeType}
-            onTimeValueChange={setTimeValue}
+            onTimeChange={(nextTimeType, nextTimeValue) => {
+              commitFilterChange({ timeType: nextTimeType, time: nextTimeValue });
+            }}
             onSearchChange={(v) => {
-              setSearchKeyword(v);
-              setCurrentPage(1);
+              updateFilters({ search: v, page: 1 }, { replace: true });
             }}
             onSearchClear={() => {
-              setSearchKeyword('');
-              setCurrentPage(1);
+              updateFilters({ search: '', page: 1 });
             }}
-            onTimeCommit={commitFilterChange}
             filterCollapsed={filterCollapsed}
             onToggleCollapse={() => setFilterCollapsed((c) => !c)}
             paginationSlot={

@@ -40,6 +40,8 @@ interface SiteSearchBoxProps {
    * - 'insight': self-contained block with subtle background glow and rounded-xl input.
    */
   variant?: Variant;
+  /** Query string copied to insight detail routes (for example leaderboard filters). */
+  navigationSearch?: string;
 }
 
 /**
@@ -112,7 +114,7 @@ function PlatformMark({ platform }: { platform: unknown }) {
   );
 }
 
-export function SiteSearchBox({ variant = 'landing' }: SiteSearchBoxProps) {
+export function SiteSearchBox({ variant = 'landing', navigationSearch = '' }: SiteSearchBoxProps) {
   const { t, i18n } = useTranslation();
   const lang = (i18n.language || 'en').startsWith('zh') ? 'zh' : 'en';
   const navigate = useNavigate();
@@ -193,17 +195,20 @@ export function SiteSearchBox({ variant = 'landing' }: SiteSearchBoxProps) {
 
   function handleResultClick(item: SearchResultItem) {
     const itemType = (item.type || '').toLowerCase();
+    let detailPath: string;
     if (itemType === 'repo') {
       const [owner, repo] = item.name.split('/');
-      navigate(`/insight/${item.platform}/${owner}/${repo}`);
+      detailPath = `/insight/${item.platform}/${owner}/${repo}`;
     } else if (itemType === 'label') {
       // flatten_labels.id is canonical ':companies/huawei/ascend'; the label
       // detail route expects the path without the leading ':' prefix.
       const labelPath = String(item.id || '').replace(/^[:#]/, '');
-      navigate(`/insight/labels/${labelPath}`);
+      detailPath = `/insight/labels/${labelPath}`;
     } else {
-      navigate(`/insight/${item.platform}/${item.name}`);
+      detailPath = `/insight/${item.platform}/${item.name}`;
     }
+    const query = navigationSearch.replace(/^\?/, '');
+    navigate(query ? `${detailPath}?${query}` : detailPath);
     setShowResults(false);
     setSearchQuery('');
     setSearchResults([]);

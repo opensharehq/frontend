@@ -21,6 +21,8 @@ import {
   Radar,
 } from 'lucide-react';
 import { GLOBAL_FRONTEND_URL, isCnFrontend } from '@/lib/frontend-site';
+import { LEADERBOARD_FILTER_PARAM_KEYS } from '@/pages/insight/domain/leaderboardFilters';
+import { withSearchParams } from '@/pages/insight/domain/routes';
 
 interface NavItem {
   labelKey: string;
@@ -143,8 +145,15 @@ export function AppLayout({ publicMode = false }: AppLayoutProps) {
 
   // 未登录且目标路径不是公开路径时，跳转到登录页并带上 redirect
   const resolveNavTo = (path: string) => {
-    if (isAuthenticated || PUBLIC_PATHS.has(path)) return path;
-    return `/login?redirect=${encodeURIComponent(path)}`;
+    const currentParams = new URLSearchParams(location.search);
+    const hasLeaderboardFilters = Object.values(LEADERBOARD_FILTER_PARAM_KEYS).every((key) =>
+      currentParams.has(key),
+    );
+    const targetPath = path === '/insight/open-leaderboard' && hasLeaderboardFilters
+      ? withSearchParams(path, currentParams)
+      : path;
+    if (isAuthenticated || PUBLIC_PATHS.has(path)) return targetPath;
+    return `/login?redirect=${encodeURIComponent(targetPath)}`;
   };
 
   void publicMode;

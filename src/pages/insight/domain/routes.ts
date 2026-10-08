@@ -29,6 +29,12 @@ export function getDeveloperDetailPath(platform: string, login: string): string 
   return `/insight/${platform.toLowerCase()}/${login}`;
 }
 
-export function getInsightHomePath(): string {
-  return '/insight';
+export function withSearchParams(path: string, search: string | URLSearchParams): string {
+  const query = (typeof search === 'string' ? search : search.toString()).replace(/^\?/, '');
+  if (!query) return path;
+  return `${path}${path.includes('?') ? '&' : '?'}${query}`;
+}
+
+export function getInsightHomePath(search: string | URLSearchParams = ''): string {
+  return withSearchParams('/insight/open-leaderboard', search);
 }

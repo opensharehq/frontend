@@ -8,7 +8,7 @@ import { formatUpdateTime } from '../domain/format';
 import { formatTimeDisplay } from '../domain/timeRange';
 import { leaderboardAvatarForItem } from '../domain/geography';
 import { normalizeInsightLang } from '../domain/lang';
-import { getDeveloperDetailPath, getLabelDetailPath, getRepoDetailPath } from '../domain/routes';
+import { getDeveloperDetailPath, getLabelDetailPath, getRepoDetailPath, withSearchParams } from '../domain/routes';
 import { LeaderboardAvatar } from './LeaderboardAvatar';
 import { DeltaDisplay } from './DeltaDisplay';
 import { Button } from '@/app/components/ui/button';
@@ -67,6 +67,7 @@ type Props = {
   updateTimeLabel?: string;
   searchKeyword: string;
   currentPage: number;
+  detailSearch: string;
   loading?: boolean;
   error?: string | null;
   onRetry?: () => void;
@@ -108,6 +109,7 @@ export const LeaderboardSection = forwardRef<HTMLDivElement, Props>(function Lea
     updateTimeLabel,
     searchKeyword,
     currentPage,
+    detailSearch,
     loading = false,
     error = null,
     onRetry,
@@ -247,7 +249,7 @@ export const LeaderboardSection = forwardRef<HTMLDivElement, Props>(function Lea
               return (
                 <Link
                   key={`${item.id ?? item.name}-${startIndex + index}`}
-                  to={detailPath}
+                  to={withSearchParams(detailPath, detailSearch)}
                   className="leaderboard-row flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-transparent bg-background/70 px-3 py-2 outline-none transition-[background-color,border-color,box-shadow] duration-150 hover:border-border hover:bg-secondary/60 focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <div className="flex w-24 flex-shrink-0 items-center gap-2">

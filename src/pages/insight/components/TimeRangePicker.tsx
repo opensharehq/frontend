@@ -20,7 +20,7 @@ type Props = {
   lang: Lang;
   t: (k: string) => string;
   onValueChange: (v: string) => void;
-  onCommit: () => void;
+  onCommit?: () => void;
   /** Hide the calendar icon + "Time selection" label row (e.g. embedded in detail panel header). */
   hideOuterLabel?: boolean;
   /** Smaller control height and text (e.g. contributor list toolbar). */
@@ -123,7 +123,7 @@ export function TimeRangePicker({
       if (nval > bounds.maxMonth) nval = bounds.maxMonth;
       onValueChange(nval);
     }
-    onCommit();
+    onCommit?.();
   };
 
   // Inner year arrows in month-grid header: only mutate displayYear, no commit.
@@ -151,7 +151,7 @@ export function TimeRangePicker({
     if (val < bounds.minMonth || val > bounds.maxMonth) return;
     onValueChange(val);
     setOpen(false);
-    onCommit();
+    onCommit?.();
   };
 
   // Click a year in the year-grid:
@@ -162,7 +162,7 @@ export function TimeRangePicker({
     if (timeType === 'year') {
       onValueChange(String(year));
       setOpen(false);
-      onCommit();
+      onCommit?.();
     } else {
       setDisplayYear(year);
       setYearSelectMode(false);

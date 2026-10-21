@@ -31,6 +31,9 @@ interface ShopItem {
   discount_tier_year: number | null;
   discount_multiplier: number;
   stock: number | null;
+  max_redemptions_per_user: number;
+  user_redemption_count: number;
+  redemption_limit_reached: boolean;
   priority?: number | null;
   image_card_url: string | null;
   image_detail_url: string | null;
@@ -207,6 +210,13 @@ export default function ShopPage() {
                   </div>
 
                   {/* 标签限制 */}
+                  {item.max_redemptions_per_user > 0 && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {t('shop.redemptionLimit', { limit: item.max_redemptions_per_user })}
+                      {' · '}
+                      {t('shop.redemptionCount', { redeemedCount: item.user_redemption_count })}
+                    </p>
+                  )}
                   {item.allowed_tags.length > 0 && (
                     <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
                       <Tag className="size-3" />
@@ -216,7 +226,11 @@ export default function ShopPage() {
                 </CardContent>
 
                 <CardFooter>
-                  {soldOut ? (
+                  {item.redemption_limit_reached ? (
+                    <span className="w-full inline-flex items-center justify-center rounded-md bg-secondary text-secondary-foreground h-10 px-4 text-sm font-medium">
+                      {t('shop.redemptionLimitReached')}
+                    </span>
+                  ) : soldOut ? (
                     <span className="w-full inline-flex items-center justify-center rounded-md bg-secondary text-secondary-foreground h-10 px-4 text-sm font-medium">
                       {t('shop.soldOut')}
                     </span>

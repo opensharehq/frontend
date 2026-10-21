@@ -67,6 +67,9 @@ interface ShopItemDetail {
   discount_tier_year: number | null;
   discount_multiplier: number;
   stock: number | null;
+  max_redemptions_per_user: number;
+  user_redemption_count: number;
+  redemption_limit_reached: boolean;
   image_card_url: string | null;
   image_detail_url: string | null;
   requires_shipping: boolean;
@@ -177,7 +180,7 @@ export default function ShopItemPage() {
   }, [id, t]);
 
   async function handleRedeem() {
-    if (!item) return;
+    if (!item || item.redemption_limit_reached || redeeming) return;
     setRedeeming(true);
     try {
       const payload: {
@@ -212,7 +215,16 @@ export default function ShopItemPage() {
       toast.success(t('shop.redeemSuccess').replace('！', ''));
     } catch (err) {
       const apiErr = getApiError(err);
-      if (apiErr.code === 'price_changed') {
+      if (apiErr.code === 'redemption_limit_reached') {
+        setItem(current => current ? { ...current, redemption_limit_reached: true } : current);
+        toast.error(t('shop.redemptionLimitReachedHint'));
+        try {
+          const refreshed = await api.get<ShopItemDetail>(`/shop/items/${id}`);
+          setItem(refreshed.data);
+        } catch {
+          // Keep redemption disabled if refreshing the latest count fails.
+        }
+      } else if (apiErr.code === 'price_changed') {
         toast.error(t('shop.priceChanged'));
         try {
           const refreshed = await api.get<ShopItemDetail>(`/shop/items/${id}`);
@@ -251,6 +263,7 @@ export default function ShopItemPage() {
 
   const stockInfo = getStockLabel(item.stock, t);
   const soldOut = item.stock === 0;
+  const limitReached = item.redemption_limit_reached;
   const addresses = item.shipping_addresses ?? [];
 
   // 计算可用的支付选项
@@ -312,7 +325,7 @@ export default function ShopItemPage() {
         useCash,
       })
     : null;
-  const canRedeem = !soldOut && (paymentPlan?.sufficient ?? false);
+  const canRedeem = !soldOut && !limitReached && (paymentPlan?.sufficient ?? false);
 
   const primaryShortfall = currentPayment
     ? Math.max(item.cost - currentPayment.balance, 0)
@@ -443,6 +456,14 @@ export default function ShopItemPage() {
               <span className="text-sm text-muted-foreground">{t('shop.stockStatus')}</span>
               <Badge variant={stockInfo.variant}>{stockInfo.text}</Badge>
             </div>
+            {item.max_redemptions_per_user > 0 && (
+              <div className="flex items-center justify-between gap-4 text-sm">
+                <span className="text-muted-foreground">
+                  {t('shop.redemptionLimit', { limit: item.max_redemptions_per_user })}
+                </span>
+                <span>{t('shop.redemptionCount', { redeemedCount: item.user_redemption_count })}</span>
+              </div>
+            )}
           </div>
 
           {/* 标签限制 */}
@@ -462,7 +483,7 @@ export default function ShopItemPage() {
           )}
 
           {/* 兑换确认区 */}
-          {!soldOut && currentPayment && (
+          {!soldOut && !limitReached && currentPayment && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">{t('shop.confirmRedeemTitle')}</CardTitle>
@@ -672,10 +693,15 @@ export default function ShopItemPage() {
           )}
 
           {/* 不可兑换提示 */}
-          {(soldOut || !currentPayment) && (
+          {(limitReached || soldOut || !currentPayment) && (
             <Card>
               <CardContent className="py-6 text-center text-muted-foreground">
-                {soldOut ? (
+                {limitReached ? (
+                  <div className="space-y-2">
+                    <p className="font-medium text-foreground">{t('shop.redemptionLimitReached')}</p>
+                    <p>{t('shop.redemptionLimitReachedHint')}</p>
+                  </div>
+                ) : soldOut ? (
                   <p>{t('shop.soldOutHint')}</p>
                 ) : (
                   <p>{t('shop.selectPayment')}</p>

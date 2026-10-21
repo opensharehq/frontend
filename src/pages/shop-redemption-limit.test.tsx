@@ -107,7 +107,8 @@ describe('shop per-user redemption limits', () => {
     expect(screen.getByText('Limit: 2 per user')).toBeInTheDocument();
   });
 
-  it.each([true, false])('handles a stale page when refreshing succeeds: %s', async (refreshSucceeds) => {
+  it.each(['succeeds', 'fails'])('keeps redemption blocked when refreshing %s', async (refreshOutcome) => {
+    const refreshSucceeds = refreshOutcome === 'succeeds';
     mockItem({ user_redemption_count: 1, redemption_limit_reached: false });
     apiMock.post.mockRejectedValue({ code: 'redemption_limit_reached' });
     renderPage();

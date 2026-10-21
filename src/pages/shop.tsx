@@ -209,7 +209,7 @@ export default function ShopPage() {
                     <Badge variant={stockInfo.variant}>{stockInfo.text}</Badge>
                   </div>
 
-                  {/* 标签限制 */}
+                  {/* 每用户兑换次数限制 */}
                   {item.max_redemptions_per_user > 0 && (
                     <p className="text-xs text-muted-foreground mt-2">
                       {t('shop.redemptionLimit', { limit: item.max_redemptions_per_user })}
@@ -217,6 +217,7 @@ export default function ShopPage() {
                       {t('shop.redemptionCount', { redeemedCount: item.user_redemption_count })}
                     </p>
                   )}
+                  {/* 标签限制 */}
                   {item.allowed_tags.length > 0 && (
                     <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
                       <Tag className="size-3" />

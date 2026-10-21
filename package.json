@@ -98,7 +98,7 @@
     "tailwindcss": "4.1.12",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.60.1",
-    "vite": "^6.4.3",
+    "vite": "^6.4.5",
     "vitest": "^4.1.8"
   },
   "peerDependencies": {
@@ -115,7 +115,7 @@
   },
   "pnpm": {
     "overrides": {
-      "vite": "6.4.3"
+      "vite": "6.4.5"
     }
   }
 }

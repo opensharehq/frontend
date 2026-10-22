@@ -271,6 +271,7 @@ export default function PointAllocationPage() {
 
   // Step 4 - Developer limit (Top N)
   const [topN, setTopN] = useState<string>("");
+  const [hasUnlimitedRecipients, setHasUnlimitedRecipients] = useState(false);
 
   // Preview
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -286,8 +287,12 @@ export default function PointAllocationPage() {
   useEffect(() => {
     async function fetchPools() {
       try {
-        const { data } = await api.get<{ items: PoolItem[] }>("/points/pools");
+        const { data } = await api.get<{
+          items: PoolItem[];
+          allocation_recipient_limit?: number | null;
+        }>("/points/pools");
         setPools(data.items);
+        setHasUnlimitedRecipients(data.allocation_recipient_limit === null);
       } catch (err) {
         const apiErr = getApiError(err);
         toast.error(t('pointAllocation.loadPoolFailed'), { description: apiErr.message });
@@ -873,7 +878,7 @@ export default function PointAllocationPage() {
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            {t('pointAllocation.topNHint')}
+            {t(hasUnlimitedRecipients ? 'pointAllocation.topNUnlimitedHint' : 'pointAllocation.topNHint')}
           </p>
         </CardContent>
       </Card>

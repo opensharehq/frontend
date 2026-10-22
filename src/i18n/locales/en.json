@@ -955,6 +955,7 @@
     "topNLabel": "Number of Developers",
     "topNPlaceholder": "Leave empty or -1 for all",
     "topNHint": "Up to 300,000 records can be returned.",
+    "topNUnlimitedHint": "Platform administrators have no account limit. Leave empty or enter -1 for all, or specify a number.",
     "topNAll": "All",
     "pointsToUsdHint": "10 points ≈ 1 USD"
   },

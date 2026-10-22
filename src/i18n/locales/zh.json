@@ -955,6 +955,7 @@
     "topNLabel": "返回开发者数量",
     "topNPlaceholder": "留空或填 -1 表示全部",
     "topNHint": "最多返回 30 万条记录。",
+    "topNUnlimitedHint": "平台管理员无账号数量上限。留空或填 -1 返回全部，也可填写指定数量。",
     "topNAll": "全部",
     "pointsToUsdHint": "10 积分 ≈ 1 美元"
   },

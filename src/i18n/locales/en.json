@@ -344,8 +344,8 @@
     "pointTypeLabel": "Point Type",
     "viewAllocation": "View details",
     "viewAllocationSummary": "View source",
-    "mergedFromSources": "{{count}} sources combined",
-    "mergedFromSourcesTitle": "This allocation was deducted from {{count}} point sources (FIFO). The ledger keeps {{count}} entries; this row merges them for display."
+    "mergedDebits": "{{count}} entries combined",
+    "mergedDebitsTitle": "This row combines {{count}} entries of the same transaction type for one allocation, including debits or refunds from different point sources."
   },
   "allocationDetail": {
     "title": "Allocation Details",
@@ -379,6 +379,7 @@
       "label": "Status",
       "draft": "Draft",
       "previewing": "Previewing",
+      "queued": "Queued",
       "executing": "Executing",
       "completed": "Completed",
       "failed": "Failed"
@@ -876,6 +877,18 @@
   "pointAllocation": {
     "title": "Point Allocation",
     "subtitle": "Configure and execute point allocation step by step",
+    "noteLabel": "Allocation note",
+    "uploadProgress": "Uploaded {{uploaded}} / {{total}} developers",
+    "batchTitle": "Point allocation #{{id}}",
+    "queuedHint": "The allocation is queued. Its points have already been deducted and cannot be spent again. If it stays queued, ask an administrator to check the background task service.",
+    "executingHint": "The allocation is using prepaid points. Completion will not charge you again. A failed task refunds the prepaid points; individual recipient failures refund the undistributed portion.",
+    "unfundedHint": "This task has not been prepaid. The worker will check the balance and deduct points before processing. Insufficient balance will fail the task.",
+    "refundHint": "Undistributed points refunded: {{amount}}. Refunded points retain their original tags and expiry dates.",
+    "backgroundHint": "You can close this page and return to this link to check the status and result.",
+    "retryExecution": "Retry this allocation",
+    "noteOptional": "Allocation note (optional)",
+    "notePlaceholder": "e.g. Thanks for maintaining the project",
+    "noteHint": "Up to 40 characters. Shown in recipients' transaction history.",
     "step1Title": "Step 1 - Select Point Pool",
     "poolLabel": "Point Pool",
     "poolPlaceholder": "Select a point pool",

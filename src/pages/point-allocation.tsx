@@ -15,8 +15,10 @@ import {
   RotateCcw,
   Info,
   Users,
+  MessageSquare,
 } from "lucide-react";
 import api, { getApiError } from "@/lib/api";
+import { ALLOCATION_BATCH_SIZE, uploadAllocation } from '@/lib/allocation-upload';
 import {
   inferLabelAvatarUrl,
   normalizeRepoPlatform,
@@ -76,6 +78,7 @@ import { toast } from "sonner";
 import { cn } from "@/app/components/ui/utils";
 
 const PREVIEW_PAGE_SIZE = 10;
+const NOTE_MAX_LENGTH = 40;
 
 // --- Types ---
 
@@ -155,6 +158,7 @@ interface ExecuteRequestBody {
   adjustment_ratio: number;
   total_amount: number;
   allocations: AllocationItem[];
+  note: string;
 }
 
 interface AllocationResult {
@@ -291,7 +295,12 @@ export default function PointAllocationPage() {
   const [previewPage, setPreviewPage] = useState(1);
 
   // Execute
+  const [note, setNote] = useState("");
+  const noteComposing = useRef(false);
+  const noteLength = Array.from(note).length;
   const [executing, setExecuting] = useState(false);
+  const [uploadedRecipients, setUploadedRecipients] = useState(0);
+  const submissionId = useRef<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   // --- Fetch pools ---
@@ -478,9 +487,8 @@ export default function PointAllocationPage() {
     )
     : [];
 
-  // 总积分（effectiveAdjustments.total）在缩放后必然 <= availableBalance，
-  // 因此 canExecute 只需判断有受益人即可。
-  const canExecute = previewData !== null && totalAdjustedPoints > 0;
+  // 总积分（effectiveAdjustments.total）在缩放后必然 <= availableBalance。
+  const canExecute = previewData !== null && totalAdjustedPoints > 0 && noteLength <= NOTE_MAX_LENGTH;
 
   /** 滑块变化处理 */
   const handleSliderChange = useCallback(
@@ -523,8 +531,8 @@ export default function PointAllocationPage() {
   }
 
   /** Execute 请求体：包含计算结果 allocations 数组 */
-  function buildExecuteBody(): ExecuteRequestBody {
-    const allocations: AllocationItem[] = previewData!.preview.map((r) => {
+  function buildAllocationItems(start: number, end: number): AllocationItem[] {
+    return previewData!.preview.slice(start, end).map((r) => {
       const key = getRecipientKey(r);
       const amount = effectiveAdjustments.byKey[key] ?? 0;
       return {
@@ -538,6 +546,9 @@ export default function PointAllocationPage() {
         amount,
       };
     });
+  }
+
+  function buildExecuteConfig(): Omit<ExecuteRequestBody, 'allocations'> {
     return {
       source_selector: selectedPool!.source_selector,
       project_scope: {
@@ -551,7 +562,7 @@ export default function PointAllocationPage() {
       end_month: endMonth + "-01",
       adjustment_ratio: theoreticalTotal > 0 ? totalAdjustedPoints / theoreticalTotal : 1,
       total_amount: effectiveAdjustments.total,
-      allocations,
+      note: note.trim(),
     };
   }
 
@@ -595,9 +606,19 @@ export default function PointAllocationPage() {
     setConfirmOpen(false);
     setExecuting(true);
     try {
+      const count = previewData!.preview.length;
+      if (count > ALLOCATION_BATCH_SIZE) {
+        submissionId.current ??= crypto.randomUUID();
+        const upload = await uploadAllocation(
+          submissionId.current, buildExecuteConfig(), count,
+          buildAllocationItems, setUploadedRecipients,
+        );
+        navigate(`/points/allocations/${upload.id}`);
+        return;
+      }
       const { data } = await api.post<AllocationResult>(
         "/points/allocations",
-        buildExecuteBody()
+        { ...buildExecuteConfig(), allocations: buildAllocationItems(0, count) }
       );
       toast.success(t('pointAllocation.executeSuccess'), {
         description: t('pointAllocation.executeSuccessDesc', {
@@ -626,7 +647,7 @@ export default function PointAllocationPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <fieldset disabled={executing} className="mx-auto min-w-0 max-w-4xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{t('pointAllocation.title')}</h1>
         <p className="text-muted-foreground">{t('pointAllocation.subtitle')}</p>
@@ -964,6 +985,37 @@ export default function PointAllocationPage() {
                 onChange={(e) => { setEndMonth(e.target.value); setPreviewData(null); }}
               />
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <MessageSquare className="size-5" />
+            {t('pointAllocation.noteLabel')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <Label htmlFor="allocation-note">{t('pointAllocation.noteOptional')}</Label>
+          <Input
+            id="allocation-note"
+            value={note}
+            onCompositionStart={() => { noteComposing.current = true; }}
+            onCompositionEnd={(e) => {
+              noteComposing.current = false;
+              setNote(Array.from(e.currentTarget.value).slice(0, NOTE_MAX_LENGTH).join(''));
+            }}
+            onChange={(e) => setNote(noteComposing.current
+              ? e.target.value
+              : Array.from(e.target.value).slice(0, NOTE_MAX_LENGTH).join(''))}
+            placeholder={t('pointAllocation.notePlaceholder')}
+            aria-describedby="allocation-note-hint allocation-note-count"
+            disabled={executing}
+          />
+          <div className="flex items-start justify-between gap-4 text-xs text-muted-foreground">
+            <p id="allocation-note-hint">{t('pointAllocation.noteHint')}</p>
+            <span id="allocation-note-count" className="shrink-0">{noteLength}/{NOTE_MAX_LENGTH}</span>
           </div>
         </CardContent>
       </Card>
@@ -1503,7 +1555,9 @@ export default function PointAllocationPage() {
               ) : (
                 <Send className="size-4 mr-2" />
               )}
-              {t('pointAllocation.executeButton')}
+              {executing && previewData.preview.length > ALLOCATION_BATCH_SIZE
+                ? t('pointAllocation.uploadProgress', { uploaded: uploadedRecipients.toLocaleString(), total: previewData.preview.length.toLocaleString() })
+                : t('pointAllocation.executeButton')}
             </Button>
           </div>
         </>
@@ -1542,6 +1596,12 @@ export default function PointAllocationPage() {
                     {((selectedPool?.available_balance ?? 0) - totalAdjustedPoints).toLocaleString()}
                   </span>
                 </div>
+                {note.trim() && (
+                  <div className="col-span-2 space-y-1">
+                    <span className="text-muted-foreground">{t('pointAllocation.noteLabel')}</span>
+                    <p className="break-all text-foreground">{note.trim()}</p>
+                  </div>
+                )}
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -1553,6 +1613,6 @@ export default function PointAllocationPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </fieldset>
   );
 }

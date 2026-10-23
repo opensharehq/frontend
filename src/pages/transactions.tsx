@@ -48,8 +48,8 @@ interface Transaction {
   tag_name: string | null;
   created_at: string;
   creator_username: string;
-  // 前端聚合后用于提示合并的来源笔数
-  _merged_count?: number;
+  // 后端合并同一次分配后的扣款明细数量
+  merged_count?: number;
 }
 
 interface PaginationMeta {
@@ -68,45 +68,6 @@ interface TransactionsResponse {
 
 const TRANSACTION_TYPE_VALUES = ["all", "earn", "spend", "withdraw", "expire"] as const;
 const POINT_TYPE_VALUES = ["all", "cash", "gift"] as const;
-
-/**
- * 将同一次分配 (reference_id = allocation_X) 产生的多笔 spend 交易折叠为一行。
- *
- * 背景：后端 spend_points 采用 FIFO 按 PointSource 逐笔扣减，跨来源时会产生多条
- * PointTransaction。财务侧需保持按来源记账以便审计，但用户侧期望看到的是一次分配=一
- * 条记录，因此在展示层按 reference_id 聚合。
- *
- * 只针对 transaction_type=spend 且 reference_id 匹配 allocation_* 的记录进行合并。
- */
-function aggregateSpendByAllocation(items: Transaction[]): Transaction[] {
-  const result: Transaction[] = [];
-  const indexByRef = new Map<string, number>();
-  for (const tx of items) {
-    const refId = tx.reference_id;
-    const isAllocSpend =
-      tx.transaction_type === "spend" &&
-      refId != null &&
-      parseAllocationIdFromReference(refId) != null;
-    if (!isAllocSpend) {
-      result.push(tx);
-      continue;
-    }
-    const existingIdx = indexByRef.get(refId as string);
-    if (existingIdx == null) {
-      indexByRef.set(refId as string, result.length);
-      result.push({ ...tx, _merged_count: 1 });
-    } else {
-      const existing = result[existingIdx];
-      result[existingIdx] = {
-        ...existing,
-        amount: existing.amount + tx.amount,
-        balance_after: tx.balance_after,
-        _merged_count: (existing._merged_count ?? 1) + 1,
-      };
-    }
-  }
-  return result;
-}
 
 function TransactionTypeIcon({ type }: { type: Transaction["transaction_type"] }) {
   switch (type) {
@@ -163,6 +124,7 @@ export default function TransactionsPage() {
       const params: Record<string, string | number> = {
         page,
         page_size: pageSize,
+        group_allocations: 1,
       };
       if (transactionType !== "all") params.transaction_type = transactionType;
       if (pointType !== "all") params.point_type = pointType;
@@ -265,7 +227,7 @@ export default function TransactionsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {aggregateSpendByAllocation(transactions).map((tx) => {
+                {transactions.map((tx) => {
                   const spendAllocationId =
                     tx.transaction_type === "spend"
                       ? parseAllocationIdFromReference(tx.reference_id)
@@ -274,7 +236,7 @@ export default function TransactionsPage() {
                     tx.transaction_type === "earn"
                       ? parseAllocationIdFromReference(tx.reference_id)
                       : null;
-                  const mergedCount = tx._merged_count ?? 1;
+                  const mergedCount = tx.merged_count ?? 1;
                   return (
                   <TableRow key={tx.id}>
                     <TableCell>
@@ -287,22 +249,22 @@ export default function TransactionsPage() {
                     </TableCell>
                     <TableCell className="max-w-[260px]">
                       <div className="flex items-center gap-2">
-                        <span className="truncate" title={tx.description}>
+                        <span className={earnAllocationId != null ? "min-w-[200px] whitespace-normal break-words" : "truncate"} title={tx.description}>
                           {tx.description}
                         </span>
                         {mergedCount > 1 && (
                           <Badge
                             variant="outline"
                             className="text-xs shrink-0"
-                            title={t("transactions.mergedFromSourcesTitle", {
+                            title={t("transactions.mergedDebitsTitle", {
                               count: mergedCount,
                               defaultValue:
-                                "该次分配跨越 {{count}} 个积分来源扣减，按账本记账生成 {{count}} 条明细，此处已合并展示",
+                                "同一次分配的 {{count}} 笔扣款已合并展示，包含分批执行或跨积分来源产生的明细",
                             })}
                           >
-                            {t("transactions.mergedFromSources", {
+                            {t("transactions.mergedDebits", {
                               count: mergedCount,
-                              defaultValue: "合计 {{count}} 笔来源",
+                              defaultValue: "合并 {{count}} 笔扣款",
                             })}
                           </Badge>
                         )}

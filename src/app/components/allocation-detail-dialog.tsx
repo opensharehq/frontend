@@ -128,6 +128,11 @@ function RecipientLoginCell({
 
 interface AllocationDetail {
   id: number;
+  note?: string;
+  paginated?: boolean;
+  page_size?: number;
+  pending_count?: number;
+  registered_count?: number;
   status: string;
   total_amount: number;
   start_month: string;
@@ -190,6 +195,7 @@ export default function AllocationDetailDialog({
   const [detail, setDetail] = useState<AllocationDetail | null>(null);
   const [registeredPage, setRegisteredPage] = useState(1);
   const [pendingPage, setPendingPage] = useState(1);
+  const [activeTab, setActiveTab] = useState('registered');
 
   const fetchDetail = useCallback(
     async (id: number) => {
@@ -197,6 +203,7 @@ export default function AllocationDetailDialog({
       try {
         const { data } = await api.get<AllocationDetail>(
           `/points/allocations/${id}`,
+          { params: { registered_page: registeredPage, pending_page: pendingPage } },
         );
         setDetail(data);
       } catch (err) {
@@ -209,17 +216,20 @@ export default function AllocationDetailDialog({
         setLoading(false);
       }
     },
-    [t, onOpenChange],
+    [t, onOpenChange, registeredPage, pendingPage],
   );
 
   useEffect(() => {
     if (open && allocationId != null) {
       setDetail(null);
-      setRegisteredPage(1);
-      setPendingPage(1);
       fetchDetail(allocationId);
     }
   }, [open, allocationId, fetchDetail]);
+
+  useEffect(() => {
+    setRegisteredPage(1);
+    setPendingPage(1);
+  }, [open, allocationId]);
 
   // 已注册账号列表：按金额倒序（优先 adjusted_points，回退 amount）
   const registeredList = useMemo(
@@ -248,24 +258,29 @@ export default function AllocationDetailDialog({
     [detail],
   );
 
+  const pageSize = detail?.paginated ? (detail.page_size ?? 20) : DETAIL_PAGE_SIZE;
+  const registeredTotal = detail?.paginated ? (detail.registered_count ?? detail.registered_recipients) : registeredList.length;
+  const pendingTotal = detail?.paginated ? (detail.pending_count ?? 0) : pendingList.length;
   const registeredTotalPages = Math.max(
     1,
-    Math.ceil(registeredList.length / DETAIL_PAGE_SIZE),
+    Math.ceil(registeredTotal / pageSize),
   );
   const pendingTotalPages = Math.max(
     1,
-    Math.ceil(pendingList.length / DETAIL_PAGE_SIZE),
+    Math.ceil(pendingTotal / pageSize),
   );
 
   const registeredPageItems = useMemo(() => {
+    if (detail?.paginated) return registeredList;
     const start = (registeredPage - 1) * DETAIL_PAGE_SIZE;
     return registeredList.slice(start, start + DETAIL_PAGE_SIZE);
-  }, [registeredList, registeredPage]);
+  }, [registeredList, registeredPage, detail?.paginated]);
 
   const pendingPageItems = useMemo(() => {
+    if (detail?.paginated) return pendingList;
     const start = (pendingPage - 1) * DETAIL_PAGE_SIZE;
     return pendingList.slice(start, start + DETAIL_PAGE_SIZE);
-  }, [pendingList, pendingPage]);
+  }, [pendingList, pendingPage, detail?.paginated]);
 
   const statusLabel = detail
     ? t(`allocationDetail.status.${detail.status}`, {
@@ -357,20 +372,28 @@ export default function AllocationDetailDialog({
               />
             </div>
 
+            {detail.note && (
+              <div className="rounded-md border p-3">
+                <div className="text-xs text-muted-foreground mb-2">{t('pointAllocation.noteLabel')}</div>
+                <p className="text-sm break-all">{detail.note}</p>
+              </div>
+            )}
+
             {/* Tabs */}
             <Tabs
-              defaultValue="registered"
+              value={activeTab}
+              onValueChange={setActiveTab}
               className="flex-1 flex flex-col overflow-hidden"
             >
               <TabsList>
                 <TabsTrigger value="registered">
                   {t("allocationDetail.registeredTab", {
-                    count: registeredList.length,
+                    count: registeredTotal,
                   })}
                 </TabsTrigger>
                 <TabsTrigger value="pending">
                   {t("allocationDetail.pendingTab", {
-                    count: pendingList.length,
+                    count: pendingTotal,
                   })}
                 </TabsTrigger>
               </TabsList>
@@ -443,8 +466,8 @@ export default function AllocationDetailDialog({
                   currentPage={registeredPage}
                   totalPages={registeredTotalPages}
                   onPageChange={setRegisteredPage}
-                  totalItems={registeredList.length}
-                  pageSize={DETAIL_PAGE_SIZE}
+                  totalItems={registeredTotal}
+                  pageSize={pageSize}
                   previousLabel={t("allocationDetail.prevPage", {
                     defaultValue: "上一页",
                   })}
@@ -519,8 +542,8 @@ export default function AllocationDetailDialog({
                   currentPage={pendingPage}
                   totalPages={pendingTotalPages}
                   onPageChange={setPendingPage}
-                  totalItems={pendingList.length}
-                  pageSize={DETAIL_PAGE_SIZE}
+                  totalItems={pendingTotal}
+                  pageSize={pageSize}
                   previousLabel={t("allocationDetail.prevPage", {
                     defaultValue: "上一页",
                   })}

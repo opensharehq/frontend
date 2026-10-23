@@ -344,8 +344,8 @@
     "pointTypeLabel": "积分类型",
     "viewAllocation": "查看详情",
     "viewAllocationSummary": "查看来源",
-    "mergedFromSources": "合计 {{count}} 笔来源",
-    "mergedFromSourcesTitle": "该次分配跨越 {{count}} 个积分来源扣减，按账本记账生成 {{count}} 条明细，此处已合并展示"
+    "mergedDebits": "合并 {{count}} 笔明细",
+    "mergedDebitsTitle": "同一次分配、同一交易类型的 {{count}} 笔明细已合并展示，包含跨积分来源产生的扣款或退款"
   },
   "allocationDetail": {
     "title": "分配详情",
@@ -379,6 +379,7 @@
       "label": "状态",
       "draft": "草稿",
       "previewing": "预览中",
+      "queued": "等待执行",
       "executing": "执行中",
       "completed": "已完成",
       "failed": "失败"
@@ -876,6 +877,18 @@
   "pointAllocation": {
     "title": "积分分配",
     "subtitle": "按步骤配置并执行积分分配",
+    "noteLabel": "备注说明",
+    "uploadProgress": "已上传 {{uploaded}} / {{total}} 位开发者",
+    "batchTitle": "积分分配 #{{id}}",
+    "queuedHint": "任务已进入队列，本次分配所需积分已扣除，不能再次使用。若长时间停留在此状态，请联系管理员检查后台任务服务。",
+    "executingHint": "后台正在使用已预扣的积分发放，完成时不会再次扣款。任务失败时退回预扣积分，部分接收者发放失败时退回未发放部分。",
+    "unfundedHint": "此任务尚未预扣积分，后台开始处理前会检查余额并扣款。余额不足时任务将失败。",
+    "refundHint": "已退回未发放积分：{{amount}}。退回积分保留原有标签和有效期。",
+    "backgroundHint": "可以关闭此页面，稍后通过此链接查看状态和结果。",
+    "retryExecution": "重新执行本次分配",
+    "noteOptional": "备注说明（选填）",
+    "notePlaceholder": "例如：感谢参与本月开源项目维护",
+    "noteHint": "最多 40 个字符，将显示在接收者的交易记录中。",
     "step1Title": "步骤 1 - 选择积分池",
     "poolLabel": "积分池",
     "poolPlaceholder": "请选择积分池",

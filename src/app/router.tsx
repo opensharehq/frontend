@@ -34,6 +34,7 @@ const OrganizationTransactionsPage = lazy(() => import('@/pages/organization-tra
 const SettingsGeneralPage = lazy(() => import('@/pages/settings-general'));
 const AccountMergePage = lazy(() => import('@/pages/account-merge'));
 const PointAllocationPage = lazy(() => import('@/pages/point-allocation'));
+const AllocationStatusPage = lazy(() => import('@/pages/allocation-status'));
 const TalentReachPage = lazy(() => import('@/pages/talent-reach'));
 const TalentReachComposePage = lazy(() => import('../pages/talent-reach-compose'));
 const TalentReachSendPage = lazy(() => import('../pages/talent-reach-send'));
@@ -91,6 +92,7 @@ export const router = createBrowserRouter([
           { path: '/points/transactions', element: lazyElement(<TransactionsPage />) },
           { path: '/points/withdrawals', element: <Navigate to="/points" replace /> },
           { path: '/points/allocate', element: lazyElement(<PointAllocationPage />) },
+          { path: '/points/allocations/:id', element: lazyElement(<AllocationStatusPage />) },
           { path: '/shop', element: lazyElement(<ShopPage />) },
           { path: '/shop/:id', element: lazyElement(<ShopItemPage />) },
           { path: '/redemptions', element: lazyElement(<RedemptionsPage />) },

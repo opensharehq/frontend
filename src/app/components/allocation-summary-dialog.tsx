@@ -120,6 +120,7 @@ interface ScopeData {
 
 interface AllocationSummary {
   id: number;
+  note?: string;
   status: string;
   source_pool: SourcePoolInfo;
   project_scope: ScopeData | null;
@@ -268,6 +269,12 @@ export default function AllocationSummaryDialog({
           </p>
         ) : (
           <div className="flex flex-col gap-4">
+            {summary.note && (
+              <div className="rounded-md border p-3">
+                <div className="text-xs text-muted-foreground mb-2">{t('pointAllocation.noteLabel')}</div>
+                <p className="text-sm break-all">{summary.note}</p>
+              </div>
+            )}
             {/* 来源积分池 */}
             <div className="rounded-md border p-3 bg-muted/30">
               <div className="text-xs text-muted-foreground mb-2">

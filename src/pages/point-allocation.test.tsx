@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/i18n';
@@ -141,6 +141,55 @@ describe('point allocation filters', () => {
     await act(async () => finishPreview(previewResponse));
     expect(screen.queryByText('contributor')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /预览分配/ })).toBeEnabled();
+  });
+
+  it('keeps the preview when editing a note and includes it in confirmation and execution', async () => {
+    renderPage(300000);
+    await selectPool();
+    apiMock.post.mockResolvedValue(previewResponse);
+    fireEvent.click(screen.getByRole('button', { name: /预览分配/ }));
+    expect((await screen.findAllByText('contributor')).length).toBeGreaterThan(0);
+    fireEvent.change(screen.getByRole('textbox', { name: '备注说明（选填）' }), {
+      target: { value: '  感谢本月开源维护 🎉  ' },
+    });
+    expect(screen.getByRole('button', { name: '执行分配' })).toBeEnabled();
+    fireEvent.click(screen.getByRole('button', { name: '执行分配' }));
+    expect(within(screen.getByRole('alertdialog')).getByText('感谢本月开源维护 🎉')).toBeInTheDocument();
+    apiMock.post.mockResolvedValue({ data: { result: { success: 0, pending: 1, failed: 0, total_points: 100 } } });
+    fireEvent.click(screen.getByRole('button', { name: '确认执行' }));
+    await waitFor(() => expect(apiMock.post).toHaveBeenLastCalledWith(
+      '/points/allocations', expect.objectContaining({ note: '感谢本月开源维护 🎉' }),
+    ));
+  });
+
+  it.each(['奖', 'a', '🎉'])('limits notes to 40 Unicode characters when typing or pasting %s', async (character) => {
+    renderPage(300000);
+    const input = await screen.findByRole('textbox', { name: '备注说明（选填）' });
+    expect(input).toHaveValue('');
+    fireEvent.change(input, { target: { value: character.repeat(41) } });
+    expect(input).toHaveValue(character.repeat(40));
+    expect(screen.getByText('40/40')).toBeInTheDocument();
+    fireEvent.change(input, { target: { value: '' } });
+    expect(screen.getByText('0/40')).toBeInTheDocument();
+  });
+
+  it('allows Chinese composition to finish before enforcing the character limit', async () => {
+    renderPage(300000);
+    await selectPool();
+    apiMock.post.mockResolvedValue(previewResponse);
+    fireEvent.click(screen.getByRole('button', { name: /预览分配/ }));
+    const execute = await screen.findByRole('button', { name: '执行分配' });
+    const input = screen.getByRole('textbox', { name: '备注说明（选填）' });
+    const prefix = '奖'.repeat(39);
+    fireEvent.change(input, { target: { value: prefix } });
+    fireEvent.compositionStart(input);
+    fireEvent.change(input, { target: { value: prefix + 'li' } });
+    expect(input).toHaveValue(prefix + 'li');
+    expect(execute).toBeDisabled();
+    fireEvent.compositionEnd(input, { target: { value: prefix + '励' } });
+    expect(input).toHaveValue(prefix + '励');
+    expect(screen.getByText('40/40')).toBeInTheDocument();
+    expect(execute).toBeEnabled();
   });
 
   it.each([300000, undefined])('keeps the ordinary limit hint for %s', async (limit) => {

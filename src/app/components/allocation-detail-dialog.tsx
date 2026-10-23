@@ -198,7 +198,7 @@ export default function AllocationDetailDialog({
   const [activeTab, setActiveTab] = useState('registered');
 
   const fetchDetail = useCallback(
-    async (id: number) => {
+    async (id: number, registeredPage = 1, pendingPage = 1) => {
       setLoading(true);
       try {
         const { data } = await api.get<AllocationDetail>(
@@ -216,20 +216,31 @@ export default function AllocationDetailDialog({
         setLoading(false);
       }
     },
-    [t, onOpenChange, registeredPage, pendingPage],
+    [t, onOpenChange],
   );
 
   useEffect(() => {
     if (open && allocationId != null) {
       setDetail(null);
-      fetchDetail(allocationId);
+      setRegisteredPage(1);
+      setPendingPage(1);
+      void fetchDetail(allocationId);
     }
   }, [open, allocationId, fetchDetail]);
 
-  useEffect(() => {
-    setRegisteredPage(1);
-    setPendingPage(1);
-  }, [open, allocationId]);
+  function changeRegisteredPage(page: number) {
+    setRegisteredPage(page);
+    if (detail?.paginated && allocationId != null) {
+      void fetchDetail(allocationId, page, pendingPage);
+    }
+  }
+
+  function changePendingPage(page: number) {
+    setPendingPage(page);
+    if (detail?.paginated && allocationId != null) {
+      void fetchDetail(allocationId, registeredPage, page);
+    }
+  }
 
   // 已注册账号列表：按金额倒序（优先 adjusted_points，回退 amount）
   const registeredList = useMemo(
@@ -465,7 +476,7 @@ export default function AllocationDetailDialog({
                 <DataPagination
                   currentPage={registeredPage}
                   totalPages={registeredTotalPages}
-                  onPageChange={setRegisteredPage}
+                  onPageChange={changeRegisteredPage}
                   totalItems={registeredTotal}
                   pageSize={pageSize}
                   previousLabel={t("allocationDetail.prevPage", {
@@ -541,7 +552,7 @@ export default function AllocationDetailDialog({
                 <DataPagination
                   currentPage={pendingPage}
                   totalPages={pendingTotalPages}
-                  onPageChange={setPendingPage}
+                  onPageChange={changePendingPage}
                   totalItems={pendingTotal}
                   pageSize={pageSize}
                   previousLabel={t("allocationDetail.prevPage", {

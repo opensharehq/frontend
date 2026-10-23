@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -30,6 +30,7 @@ import { Badge } from "@/app/components/ui/badge";
 import { Input } from "@/app/components/ui/input";
 import { MonthPicker } from "@/app/components/ui/month-picker";
 import { Label } from "@/app/components/ui/label";
+import { Checkbox } from "@/app/components/ui/checkbox";
 import { Slider } from "@/app/components/ui/slider";
 import {
   Select,
@@ -147,7 +148,7 @@ interface AllocationItem {
 
 interface ExecuteRequestBody {
   source_selector: SourceSelector;
-  project_scope: { tags: string[]; operators?: string[]; operation: string };
+  project_scope: { tags: string[]; operators?: string[]; operation: string; platforms: string[] | null };
   user_scope: null;
   start_month: string;
   end_month: string;
@@ -227,6 +228,16 @@ export default function PointAllocationPage() {
     ];
   });
   const [tagOperators, setTagOperators] = useState<string[]>([]);
+  const [availablePlatforms, setAvailablePlatforms] = useState<string[]>([]);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[] | null>(null);
+  const platformRevision = useRef(0);
+
+  const updatePlatforms = (platforms: string[] | null) => {
+    setSelectedPlatforms(platforms);
+    platformRevision.current += 1;
+    setPreviewData(null);
+    setIndividualAdjustments({});
+  };
 
   const updateOperator = (index: number, op: string) => {
     setTagOperators((prev) => {
@@ -290,9 +301,11 @@ export default function PointAllocationPage() {
         const { data } = await api.get<{
           items: PoolItem[];
           allocation_recipient_limit?: number | null;
+          allocation_platforms?: string[];
         }>("/points/pools");
         setPools(data.items);
         setHasUnlimitedRecipients(data.allocation_recipient_limit === null);
+        setAvailablePlatforms(data.allocation_platforms ?? []);
       } catch (err) {
         const apiErr = getApiError(err);
         toast.error(t('pointAllocation.loadPoolFailed'), { description: apiErr.message });
@@ -334,6 +347,7 @@ export default function PointAllocationPage() {
     selectedPool !== null &&
     selectedPool.available_balance > 0 &&
     selectedTags.length > 0 &&
+    (selectedPlatforms === null || selectedPlatforms.length > 0) &&
     startMonth &&
     endMonth;
 
@@ -499,6 +513,7 @@ export default function PointAllocationPage() {
         tags: selectedTags.map((t) => t.id),
         operators: tagOperators.length > 0 ? tagOperators : undefined,
         operation: "OR",
+        platforms: selectedPlatforms,
       },
       user_scope: null,
       start_month: startMonth + "-01",
@@ -529,6 +544,7 @@ export default function PointAllocationPage() {
         tags: selectedTags.map((t) => t.id),
         operators: tagOperators.length > 0 ? tagOperators : undefined,
         operation: "OR",
+        platforms: selectedPlatforms,
       },
       user_scope: null,
       start_month: startMonth + "-01",
@@ -541,6 +557,7 @@ export default function PointAllocationPage() {
 
   async function handlePreview() {
     if (!canPreview) return;
+    const requestedPlatformRevision = platformRevision.current;
     setPreviewLoading(true);
     setPreviewData(null);
     setIndividualAdjustments({});
@@ -550,6 +567,7 @@ export default function PointAllocationPage() {
         "/points/allocations/preview",
         buildPreviewBody()
       );
+      if (requestedPlatformRevision !== platformRevision.current) return;
       setPreviewData(data);
       // 设置滑块默认值
       const ratio = data.contribution_to_points_ratio ?? 100;
@@ -701,6 +719,41 @@ export default function PointAllocationPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <fieldset className="space-y-3" disabled={executing}>
+            <legend className="text-sm font-medium mb-3">{t('pointAllocation.platformLabel')}</legend>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="allocation-all-platforms"
+                checked={selectedPlatforms === null}
+                onCheckedChange={(checked) => updatePlatforms(checked === true ? null : [])}
+              />
+              <Label htmlFor="allocation-all-platforms">{t('pointAllocation.allPlatforms')}</Label>
+            </div>
+            {selectedPlatforms !== null && (
+              <>
+                <div className="flex flex-wrap gap-x-6 gap-y-3">
+                  {availablePlatforms.map((platform) => (
+                    <div key={platform} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`allocation-platform-${platform}`}
+                        checked={selectedPlatforms.includes(platform)}
+                        onCheckedChange={(checked) => updatePlatforms(
+                          checked === true
+                            ? [...selectedPlatforms, platform]
+                            : selectedPlatforms.filter((selected) => selected !== platform),
+                        )}
+                      />
+                      <Label htmlFor={`allocation-platform-${platform}`}>{platform}</Label>
+                    </div>
+                  ))}
+                </div>
+                <p className={cn("text-sm", selectedPlatforms.length === 0 ? "text-destructive" : "text-muted-foreground")} role={selectedPlatforms.length === 0 ? "alert" : undefined}>
+                  {t(availablePlatforms.length === 0 ? 'pointAllocation.noPlatformsAvailable' : 'pointAllocation.selectPlatformsHint')}
+                </p>
+              </>
+            )}
+          </fieldset>
+
           {selectedTags.length > 0 && (
             <div className="space-y-2">
               <Label>{t('pointAllocation.selectedTags')}</Label>

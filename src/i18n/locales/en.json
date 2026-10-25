@@ -935,6 +935,7 @@
     "resetToRatioOne": "Reset to Ratio 1",
     "resetToRatioOneTip": "Reset the total allocation as close to ratio 1 as possible, and clear all manual adjustments for individual developers. If the pool balance is insufficient to cover the theoretical total, reset to the maximum achievable ratio.",
     "contributorList": "Contributor List",
+    "emptyPreview": "No accounts available for allocation in the selected scope",
     "username": "Username",
     "status": "Status",
     "contribution": "Contribution",

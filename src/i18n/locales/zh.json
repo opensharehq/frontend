@@ -935,6 +935,7 @@
     "resetToRatioOne": "重置为比例 1",
     "resetToRatioOneTip": "将发放总量重置为尽可能接近比例 1 的状态，并清除所有对特定开发者的手动调整。若积分池余额不足以覆盖理论全额，则按可达到的最大比例重置。",
     "contributorList": "贡献者列表",
+    "emptyPreview": "当前范围内暂无可分配账号",
     "username": "用户名",
     "status": "状态",
     "contribution": "贡献度",

@@ -1184,7 +1184,9 @@ export default function PointAllocationPage() {
             </CardHeader>
             <CardContent>
               {filteredPreviewRecipients.length === 0 && (
-                <p className="py-10 text-center text-sm text-muted-foreground">{t('allocationSearch.noResults')}</p>
+                <p className="py-10 text-center text-sm text-muted-foreground">
+                  {t(accountQuery.trim() ? 'allocationSearch.noResults' : 'pointAllocation.emptyPreview')}
+                </p>
               )}
               <div className="divide-y divide-border md:hidden">
                 {paginatedPreviewRecipients.map((r) => {

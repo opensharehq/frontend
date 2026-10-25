@@ -162,6 +162,22 @@ describe('point allocation filters', () => {
     ));
   });
 
+  it('distinguishes an empty preview from an active search with no matches', async () => {
+    renderPage(300000);
+    await selectPool();
+    fireEvent.click(screen.getByRole('button', { name: /预览分配/ }));
+    const search = await screen.findByRole('searchbox');
+    expect(screen.getByText('当前范围内暂无可分配账号')).toBeVisible();
+    expect(screen.queryByText('没有匹配的账号')).not.toBeInTheDocument();
+    fireEvent.change(search, { target: { value: '   ' } });
+    expect(screen.getByText('当前范围内暂无可分配账号')).toBeVisible();
+    fireEvent.change(search, { target: { value: 'alice' } });
+    expect(screen.getByText('没有匹配的账号')).toBeVisible();
+    expect(screen.queryByText('当前范围内暂无可分配账号')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '清除账号搜索' }));
+    expect(screen.getByText('当前范围内暂无可分配账号')).toBeVisible();
+  });
+
   it('searches beyond the current page without changing allocation amounts or recipients', async () => {
     renderPage(300000);
     await selectPool();

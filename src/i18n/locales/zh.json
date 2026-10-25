@@ -347,6 +347,12 @@
     "mergedDebits": "合并 {{count}} 笔明细",
     "mergedDebitsTitle": "同一次分配、同一交易类型的 {{count}} 笔明细已合并展示，包含跨积分来源产生的扣款或退款"
   },
+  "allocationSearch": {
+    "placeholder": "搜索账号名（不区分大小写）",
+    "clear": "清除账号搜索",
+    "resultCount": "匹配 {{matched}} / 共 {{total}} 个账号",
+    "noResults": "没有匹配的账号"
+  },
   "allocationDetail": {
     "title": "分配详情",
     "titleWithId": "分配详情 #{{id}}",

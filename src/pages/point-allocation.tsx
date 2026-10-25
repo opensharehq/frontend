@@ -18,6 +18,8 @@ import {
   MessageSquare,
 } from "lucide-react";
 import api, { getApiError } from "@/lib/api";
+import AllocationAccountSearch from '@/app/components/allocation-account-search';
+import { getAllocationAccountLogin as getRecipientLogin, useAllocationAccountSearch } from '@/lib/allocation-accounts';
 import { ALLOCATION_BATCH_SIZE, uploadAllocation } from '@/lib/allocation-upload';
 import {
   inferLabelAvatarUrl,
@@ -78,6 +80,7 @@ import { toast } from "sonner";
 import { cn } from "@/app/components/ui/utils";
 
 const PREVIEW_PAGE_SIZE = 10;
+const EMPTY_PREVIEW: PreviewRecipient[] = [];
 const NOTE_MAX_LENGTH = 40;
 
 // --- Types ---
@@ -183,17 +186,6 @@ function getMaxMonth() {
   return `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, "0")}`;
 }
 
-// 取贡献者在对应平台上的登录名：优先匹配 `{platform}_login`，回退 actor_login。
-function getRecipientLogin(r: PreviewRecipient): string {
-  if (r.platform) {
-    const p = normalizeRepoPlatform(r.platform);
-    const key = `${p}_login` as keyof PreviewRecipient;
-    const v = r[key];
-    if (typeof v === "string" && v) return v;
-  }
-  return r.github_login ?? r.actor_login ?? "";
-}
-
 function getRecipientKey(r: PreviewRecipient): string {
   return `${r.platform ?? ""}:${r.actor_id ?? ""}`;
 }
@@ -293,6 +285,7 @@ export default function PointAllocationPage() {
   const [previewData, setPreviewData] = useState<PreviewResponse | null>(null);
   const [individualAdjustments, setIndividualAdjustments] = useState<Record<string, number>>({});
   const [previewPage, setPreviewPage] = useState(1);
+  const [accountQuery, setAccountQuery] = useState("");
 
   // Execute
   const [note, setNote] = useState("");
@@ -480,12 +473,11 @@ export default function PointAllocationPage() {
   const unregisteredCount = previewData
     ? previewData.preview.filter((r) => !r.is_registered).length
     : 0;
-  const paginatedPreviewRecipients = previewData
-    ? previewData.preview.slice(
-      (previewPage - 1) * PREVIEW_PAGE_SIZE,
-      previewPage * PREVIEW_PAGE_SIZE,
-    )
-    : [];
+  const filteredPreviewRecipients = useAllocationAccountSearch(previewData?.preview ?? EMPTY_PREVIEW, accountQuery);
+  const paginatedPreviewRecipients = filteredPreviewRecipients.slice(
+    (previewPage - 1) * PREVIEW_PAGE_SIZE,
+    previewPage * PREVIEW_PAGE_SIZE,
+  );
 
   // 总积分（effectiveAdjustments.total）在缩放后必然 <= availableBalance。
   const canExecute = previewData !== null && totalAdjustedPoints > 0 && noteLength <= NOTE_MAX_LENGTH;
@@ -573,6 +565,7 @@ export default function PointAllocationPage() {
     setPreviewData(null);
     setIndividualAdjustments({});
     setPreviewPage(1);
+    setAccountQuery("");
     try {
       const { data } = await api.post<PreviewResponse>(
         "/points/allocations/preview",
@@ -1182,8 +1175,17 @@ export default function PointAllocationPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">{t('pointAllocation.contributorList')}</CardTitle>
+              <AllocationAccountSearch
+                value={accountQuery}
+                onChange={(query) => { setAccountQuery(query); setPreviewPage(1); }}
+                matchedCount={filteredPreviewRecipients.length}
+                totalCount={previewData.preview.length}
+              />
             </CardHeader>
             <CardContent>
+              {filteredPreviewRecipients.length === 0 && (
+                <p className="py-10 text-center text-sm text-muted-foreground">{t('allocationSearch.noResults')}</p>
+              )}
               <div className="divide-y divide-border md:hidden">
                 {paginatedPreviewRecipients.map((r) => {
                   const key = getRecipientKey(r);
@@ -1510,16 +1512,16 @@ export default function PointAllocationPage() {
                   </TableBody>
                 </Table>
               </div>
-              {previewData.preview.length > PREVIEW_PAGE_SIZE && (
+              {filteredPreviewRecipients.length > PREVIEW_PAGE_SIZE && (
                 <div className="mt-4">
                   <DataPagination
                     currentPage={previewPage}
                     totalPages={Math.max(
                       1,
-                      Math.ceil(previewData.preview.length / PREVIEW_PAGE_SIZE),
+                      Math.ceil(filteredPreviewRecipients.length / PREVIEW_PAGE_SIZE),
                     )}
                     onPageChange={setPreviewPage}
-                    totalItems={previewData.preview.length}
+                    totalItems={filteredPreviewRecipients.length}
                     pageSize={PREVIEW_PAGE_SIZE}
                     previousLabel={t('pointAllocation.prevPage', {
                       defaultValue: '上一页',
@@ -1532,9 +1534,9 @@ export default function PointAllocationPage() {
                       start: (previewPage - 1) * PREVIEW_PAGE_SIZE + 1,
                       end: Math.min(
                         previewPage * PREVIEW_PAGE_SIZE,
-                        previewData.preview.length,
+                        filteredPreviewRecipients.length,
                       ),
-                      total: previewData.preview.length,
+                      total: filteredPreviewRecipients.length,
                     })}
                   />
                 </div>

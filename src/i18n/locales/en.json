@@ -347,6 +347,12 @@
     "mergedDebits": "{{count}} entries combined",
     "mergedDebitsTitle": "This row combines {{count}} entries of the same transaction type for one allocation, including debits or refunds from different point sources."
   },
+  "allocationSearch": {
+    "placeholder": "Search accounts (case-insensitive)",
+    "clear": "Clear account search",
+    "resultCount": "{{matched}} matching / {{total}} accounts",
+    "noResults": "No matching accounts"
+  },
   "allocationDetail": {
     "title": "Allocation Details",
     "titleWithId": "Allocation Details #{{id}}",

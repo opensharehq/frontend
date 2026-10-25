@@ -26,6 +26,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/app/components/ui/table";
+import AllocationAccountSearch from '@/app/components/allocation-account-search';
+import { getAllocationAccountLogin as getItemLogin, useAllocationAccountSearch } from '@/lib/allocation-accounts';
 import { DataPagination } from "@/app/components/ui/data-pagination";
 import {
   getDeveloperProfileUrlByPlatform,
@@ -66,20 +68,6 @@ interface PendingGrantItem {
   is_claimed: boolean;
   claimed_at: string | null;
   expires_at: string | null;
-}
-
-/** 提取贡献者/待领取项的登录名：优先 `{platform}_login`，回退 actor_login / github_login */
-function getItemLogin(item: {
-  platform?: string;
-  actor_login?: string;
-  github_login?: string;
-}): string {
-  if (item.platform) {
-    const p = normalizeRepoPlatform(item.platform);
-    const v = (item as Record<string, unknown>)[`${p}_login`];
-    if (typeof v === "string" && v) return v;
-  }
-  return item.actor_login || item.github_login || "";
 }
 
 /** 渲染带平台 logo + profile 链接的登录名单元格 */
@@ -129,10 +117,6 @@ function RecipientLoginCell({
 interface AllocationDetail {
   id: number;
   note?: string;
-  paginated?: boolean;
-  page_size?: number;
-  pending_count?: number;
-  registered_count?: number;
   status: string;
   total_amount: number;
   start_month: string;
@@ -196,14 +180,14 @@ export default function AllocationDetailDialog({
   const [registeredPage, setRegisteredPage] = useState(1);
   const [pendingPage, setPendingPage] = useState(1);
   const [activeTab, setActiveTab] = useState('registered');
+  const [accountQuery, setAccountQuery] = useState('');
 
   const fetchDetail = useCallback(
-    async (id: number, registeredPage = 1, pendingPage = 1) => {
+    async (id: number) => {
       setLoading(true);
       try {
         const { data } = await api.get<AllocationDetail>(
           `/points/allocations/${id}`,
-          { params: { registered_page: registeredPage, pending_page: pendingPage } },
         );
         setDetail(data);
       } catch (err) {
@@ -224,23 +208,10 @@ export default function AllocationDetailDialog({
       setDetail(null);
       setRegisteredPage(1);
       setPendingPage(1);
+      setAccountQuery('');
       void fetchDetail(allocationId);
     }
   }, [open, allocationId, fetchDetail]);
-
-  function changeRegisteredPage(page: number) {
-    setRegisteredPage(page);
-    if (detail?.paginated && allocationId != null) {
-      void fetchDetail(allocationId, page, pendingPage);
-    }
-  }
-
-  function changePendingPage(page: number) {
-    setPendingPage(page);
-    if (detail?.paginated && allocationId != null) {
-      void fetchDetail(allocationId, registeredPage, page);
-    }
-  }
 
   // 已注册账号列表：按金额倒序（优先 adjusted_points，回退 amount）
   const registeredList = useMemo(
@@ -269,29 +240,14 @@ export default function AllocationDetailDialog({
     [detail],
   );
 
-  const pageSize = detail?.paginated ? (detail.page_size ?? 20) : DETAIL_PAGE_SIZE;
-  const registeredTotal = detail?.paginated ? (detail.registered_count ?? detail.registered_recipients) : registeredList.length;
-  const pendingTotal = detail?.paginated ? (detail.pending_count ?? 0) : pendingList.length;
-  const registeredTotalPages = Math.max(
-    1,
-    Math.ceil(registeredTotal / pageSize),
-  );
-  const pendingTotalPages = Math.max(
-    1,
-    Math.ceil(pendingTotal / pageSize),
-  );
-
-  const registeredPageItems = useMemo(() => {
-    if (detail?.paginated) return registeredList;
-    const start = (registeredPage - 1) * DETAIL_PAGE_SIZE;
-    return registeredList.slice(start, start + DETAIL_PAGE_SIZE);
-  }, [registeredList, registeredPage, detail?.paginated]);
-
-  const pendingPageItems = useMemo(() => {
-    if (detail?.paginated) return pendingList;
-    const start = (pendingPage - 1) * DETAIL_PAGE_SIZE;
-    return pendingList.slice(start, start + DETAIL_PAGE_SIZE);
-  }, [pendingList, pendingPage, detail?.paginated]);
+  const filteredRegistered = useAllocationAccountSearch(registeredList, accountQuery);
+  const filteredPending = useAllocationAccountSearch(pendingList, accountQuery);
+  const registeredTotal = filteredRegistered.length;
+  const pendingTotal = filteredPending.length;
+  const registeredTotalPages = Math.max(1, Math.ceil(registeredTotal / DETAIL_PAGE_SIZE));
+  const pendingTotalPages = Math.max(1, Math.ceil(pendingTotal / DETAIL_PAGE_SIZE));
+  const registeredPageItems = filteredRegistered.slice((registeredPage - 1) * DETAIL_PAGE_SIZE, registeredPage * DETAIL_PAGE_SIZE);
+  const pendingPageItems = filteredPending.slice((pendingPage - 1) * DETAIL_PAGE_SIZE, pendingPage * DETAIL_PAGE_SIZE);
 
   const statusLabel = detail
     ? t(`allocationDetail.status.${detail.status}`, {
@@ -390,6 +346,13 @@ export default function AllocationDetailDialog({
               </div>
             )}
 
+            <AllocationAccountSearch
+              value={accountQuery}
+              onChange={(query) => { setAccountQuery(query); setRegisteredPage(1); setPendingPage(1); }}
+              matchedCount={activeTab === 'registered' ? registeredTotal : pendingTotal}
+              totalCount={activeTab === 'registered' ? registeredList.length : pendingList.length}
+            />
+
             {/* Tabs */}
             <Tabs
               value={activeTab}
@@ -414,9 +377,9 @@ export default function AllocationDetailDialog({
                 className="flex flex-col gap-3 overflow-hidden"
               >
                 <div className="overflow-auto border rounded-md">
-                {registeredList.length === 0 ? (
+                {registeredTotal === 0 ? (
                   <p className="text-center text-muted-foreground py-10 text-sm">
-                    {t("allocationDetail.emptyRegistered")}
+                    {t(accountQuery.trim() ? "allocationSearch.noResults" : "allocationDetail.emptyRegistered")}
                   </p>
                 ) : (
                   <Table>
@@ -476,9 +439,9 @@ export default function AllocationDetailDialog({
                 <DataPagination
                   currentPage={registeredPage}
                   totalPages={registeredTotalPages}
-                  onPageChange={changeRegisteredPage}
+                  onPageChange={setRegisteredPage}
                   totalItems={registeredTotal}
-                  pageSize={pageSize}
+                  pageSize={DETAIL_PAGE_SIZE}
                   previousLabel={t("allocationDetail.prevPage", {
                     defaultValue: "上一页",
                   })}
@@ -493,9 +456,9 @@ export default function AllocationDetailDialog({
                 className="flex flex-col gap-3 overflow-hidden"
               >
                 <div className="overflow-auto border rounded-md">
-                {pendingList.length === 0 ? (
+                {pendingTotal === 0 ? (
                   <p className="text-center text-muted-foreground py-10 text-sm">
-                    {t("allocationDetail.emptyPending")}
+                    {t(accountQuery.trim() ? "allocationSearch.noResults" : "allocationDetail.emptyPending")}
                   </p>
                 ) : (
                   <Table>
@@ -552,9 +515,9 @@ export default function AllocationDetailDialog({
                 <DataPagination
                   currentPage={pendingPage}
                   totalPages={pendingTotalPages}
-                  onPageChange={changePendingPage}
+                  onPageChange={setPendingPage}
                   totalItems={pendingTotal}
-                  pageSize={pageSize}
+                  pageSize={DETAIL_PAGE_SIZE}
                   previousLabel={t("allocationDetail.prevPage", {
                     defaultValue: "上一页",
                   })}

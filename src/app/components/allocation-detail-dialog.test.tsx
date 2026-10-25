@@ -48,37 +48,32 @@ describe('allocation detail pagination', () => {
     expect(apiMock.get).toHaveBeenCalledTimes(1);
   });
 
-  it('fetches server pages on demand and keeps the other tab page unchanged', async () => {
-    apiMock.get.mockImplementation(async (_url, { params }) => ({ data: {
-      ...detail, paginated: true, page_size: 10, registered_count: 11, pending_count: 11,
-      contribution_data: registered.slice((params.registered_page - 1) * 10, params.registered_page * 10),
-      pending_grants: pending.slice((params.pending_page - 1) * 10, params.pending_page * 10),
-    } }));
+  it('searches all accounts locally across both tabs and resets pages', async () => {
+    apiMock.get.mockResolvedValue({ data: detail });
     const view = render(<AllocationDetailDialog allocationId={42} open onOpenChange={onOpenChange} />);
     expect(await screen.findByText('registered-0')).toBeVisible();
+    fireEvent.click(screen.getByRole('link', { name: 'Go to next page' }));
+    const search = screen.getByRole('searchbox');
+    fireEvent.change(search, { target: { value: 'RED-10' } });
+    expect(screen.getByText('registered-10')).toBeVisible();
+    expect(screen.getByText('匹配 1 / 共 11 个账号')).toBeVisible();
+    expect(screen.queryByRole('link', { name: 'Go to next page' })).not.toBeInTheDocument();
+    fireEvent.change(search, { target: { value: '-10' } });
+    await userEvent.click(screen.getByRole('tab', { name: '待领取 (1)' }));
+    expect(screen.getByText('pending-10')).toBeVisible();
+    fireEvent.change(search, { target: { value: 'missing' } });
+    expect(screen.getByText('没有匹配的账号')).toBeVisible();
+    expect(screen.getByText('匹配 0 / 共 11 个账号')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: '清除账号搜索' }));
+    expect(screen.getByText('pending-0')).toBeVisible();
     expect(apiMock.get).toHaveBeenCalledTimes(1);
-    fireEvent.click(screen.getByRole('link', { name: 'Go to next page' }));
-    expect(await screen.findByText('registered-10')).toBeVisible();
-    expect(apiMock.get).toHaveBeenLastCalledWith('/points/allocations/42', {
-      params: { registered_page: 2, pending_page: 1 },
-    });
 
-    await userEvent.click(screen.getByRole('tab', { name: '待领取 (11)' }));
-    expect(apiMock.get).toHaveBeenCalledTimes(2);
-    fireEvent.click(screen.getByRole('link', { name: 'Go to next page' }));
-    expect(await screen.findByText('pending-10')).toBeVisible();
-    expect(apiMock.get).toHaveBeenLastCalledWith('/points/allocations/42', {
-      params: { registered_page: 2, pending_page: 2 },
-    });
-    expect(screen.getByRole('tab', { name: '待领取 (11)' })).toHaveAttribute('data-state', 'active');
-
+    fireEvent.change(search, { target: { value: 'missing' } });
     view.rerender(<AllocationDetailDialog allocationId={42} open={false} onOpenChange={onOpenChange} />);
     view.rerender(<AllocationDetailDialog allocationId={42} open onOpenChange={onOpenChange} />);
     expect(await screen.findByText('pending-0')).toBeVisible();
-    expect(apiMock.get).toHaveBeenCalledTimes(4);
-    expect(apiMock.get).toHaveBeenLastCalledWith('/points/allocations/42', {
-      params: { registered_page: 1, pending_page: 1 },
-    });
+    expect(screen.getByRole('searchbox')).toHaveValue('');
+    expect(apiMock.get).toHaveBeenCalledTimes(2);
   });
 
   it('resets cached local pages when opening a different allocation', async () => {
@@ -93,8 +88,6 @@ describe('allocation detail pagination', () => {
     expect(await screen.findByText('registered-0')).toBeVisible();
     expect(within(screen.getByRole('dialog')).getByText('分配详情 #43')).toBeVisible();
     expect(apiMock.get).toHaveBeenCalledTimes(2);
-    expect(apiMock.get).toHaveBeenLastCalledWith('/points/allocations/43', {
-      params: { registered_page: 1, pending_page: 1 },
-    });
+    expect(apiMock.get).toHaveBeenLastCalledWith('/points/allocations/43');
   });
 });

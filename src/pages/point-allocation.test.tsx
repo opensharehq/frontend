@@ -162,6 +162,40 @@ describe('point allocation filters', () => {
     ));
   });
 
+  it('searches beyond the current page without changing allocation amounts or recipients', async () => {
+    renderPage(300000);
+    await selectPool();
+    const preview = Array.from({ length: 12 }, (_, index) => ({
+      ...previewResponse.data.preview[0], actor_id: String(index), actor_login: `Developer-${index}`,
+      contribution_score: 0.1,
+    }));
+    apiMock.post.mockResolvedValue({ data: { ...previewResponse.data, preview, total_recipients: 12 } });
+    fireEvent.click(screen.getByRole('button', { name: /预览分配/ }));
+    const search = await screen.findByRole('searchbox');
+    fireEvent.change(search, { target: { value: 'LoPeR-11' } });
+    expect(screen.getAllByText('Developer-11').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Developer-0')).not.toBeInTheDocument();
+    expect(screen.getByText('匹配 1 / 共 12 个账号')).toBeVisible();
+    const row = screen.getByRole('row', { name: /Developer-11/ });
+    fireEvent.change(within(row).getByRole('spinbutton'), { target: { value: '25' } });
+    fireEvent.click(screen.getByRole('button', { name: '清除账号搜索' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Go to next page' }));
+    expect(within(screen.getByRole('row', { name: /Developer-11/ })).getByRole('spinbutton')).toHaveValue(25);
+    fireEvent.change(search, { target: { value: 'missing' } });
+    expect(screen.getByText('没有匹配的账号')).toBeVisible();
+    fireEvent.change(search, { target: { value: 'DEVELOPER-0' } });
+    expect(screen.getAllByText('Developer-0').length).toBeGreaterThan(0);
+    expect(screen.queryByRole('link', { name: 'Go to next page' })).not.toBeInTheDocument();
+    expect(apiMock.post).toHaveBeenCalledTimes(1);
+    apiMock.post.mockResolvedValue({ data: { result: { success: 0, pending: 12, failed: 0, total_points: 135 } } });
+    fireEvent.click(screen.getByRole('button', { name: '执行分配' }));
+    fireEvent.click(screen.getByRole('button', { name: '确认执行' }));
+    await waitFor(() => expect(apiMock.post).toHaveBeenLastCalledWith('/points/allocations', expect.objectContaining({
+      total_amount: 135,
+      allocations: preview.map((item, index) => expect.objectContaining({ actor_id: item.actor_id, amount: index === 11 ? 25 : 10 })),
+    })));
+  });
+
   it.each(['奖', 'a', '🎉'])('limits notes to 40 Unicode characters when typing or pasting %s', async (character) => {
     renderPage(300000);
     const input = await screen.findByRole('textbox', { name: '备注说明（选填）' });
